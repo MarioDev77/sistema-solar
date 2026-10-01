@@ -5,7 +5,7 @@ import { OrbitControls, Stars, Html, Line, Sparkles, useTexture, useProgress } f
 import { Suspense, useCallback, useLayoutEffect, useMemo, useRef, useState, useEffect, type RefObject } from 'react'
 import * as THREE from 'three'
 import { Planet as TexturedPlanet, FlatPlanet } from './planet'
-import { Search, Orbit, Hand, Play, Pause, RotateCcw, Maximize2, Crosshair, ChevronLeft, ChevronRight, X, Layers3, Camera, MousePointer2, ZoomIn, ArrowLeft, Compass, ExternalLink, GitCompareArrows, Ruler } from 'lucide-react'
+import { Search, Orbit, Hand, Play, Pause, RotateCcw, Maximize2, Crosshair, ChevronLeft, ChevronRight, X, Layers3, Camera, MousePointer2, ZoomIn, ArrowLeft, Compass, ExternalLink, GitCompareArrows, Ruler, BookOpen, Atom, Presentation, Check } from 'lucide-react'
 
 const textures: Record<string, string> = {
   mercury: '/textures/mercury.jpg',
@@ -147,16 +147,50 @@ const catalogObjects: CatalogObject[] = planets.flatMap((planet) => [
   ...planet.moonList.map((moon) => ({ name: moon.name, kind: `Lua de ${planet.name}`, planet, moon })),
 ])
 
-const guideStops = [
-  { name: 'Mercúrio', fact: 'Mercúrio completa uma volta ao redor do Sol em cerca de 88 dias terrestres.' },
-  { name: 'Vênus', fact: 'Vênus é o planeta mais quente: sua atmosfera densa retém muito calor.' },
-  { name: 'Terra', fact: 'Até agora, a Terra é o único mundo onde sabemos que existe vida.' },
-  { name: 'Marte', fact: 'Marte abriga o Olympus Mons, o maior vulcão conhecido do Sistema Solar.' },
-  { name: 'Júpiter', fact: 'Júpiter é o maior planeta do Sistema Solar e tem faixas de nuvens em movimento.' },
-  { name: 'Saturno', fact: 'Os anéis de Saturno são compostos principalmente de fragmentos de gelo e rocha.' },
-  { name: 'Urano', fact: 'O eixo de rotação de Urano é muito inclinado, fazendo o planeta girar quase de lado.' },
-  { name: 'Netuno', fact: 'Netuno é um gigante de gelo distante, com ventos extremamente velozes.' },
-  { name: 'Plutão', fact: 'Plutão é um planeta anão; Caronte é tão grande em relação a ele que ambos orbitam um centro comum fora de Plutão.' },
+type LessonPlan = {
+  title: string
+  target: string
+  objective: string
+  question: string
+  choices: string[]
+  correct: number
+  explanation: string
+  steps: string[]
+}
+
+const lessons: LessonPlan[] = [
+  {
+    title: 'A distância muda o ano?', target: 'Terra',
+    objective: 'Investigar a relação entre o tamanho da órbita e o período orbital.',
+    question: 'Mantendo a mesma estrela, se a distância orbital dobrar, quanto fica o período?',
+    choices: ['Dobra: 2 anos', 'Cerca de 2,8 anos', 'Fica quatro vezes maior'], correct: 1,
+    explanation: 'Pela 3ª lei de Kepler, T² é proporcional a³. Então T cresce com a distância elevada a 3/2: 2^(3/2) ≈ 2,83.',
+    steps: ['Registre sua previsão antes de abrir o experimento.', 'No experimento, mantenha a massa da estrela em 1 massa solar.', 'Mude a distância de 1 AU para 2 AU e compare os períodos calculados.'],
+  },
+  {
+    title: 'Uma estrela mais massiva', target: 'Saturno',
+    objective: 'Observar como a massa central altera o período e a velocidade orbital.',
+    question: 'Na mesma órbita, uma estrela com o dobro da massa faz o período ficar…',
+    choices: ['Maior, por um fator √2', 'Igual', 'Menor, por um fator 1/√2'], correct: 2,
+    explanation: 'No modelo de dois corpos com massa do planeta desprezível, T² = a³/M. Dobrar M reduz T para 1/√2 do valor original; a velocidade circular aumenta por √2.',
+    steps: ['Anote sua previsão para período e velocidade.', 'Mantenha a distância em 1 AU.', 'Aumente a massa central de 1 para 2 massas solares e leia os resultados.'],
+  },
+  {
+    title: 'Terra e Marte', target: 'Marte',
+    objective: 'Relacionar distância média e duração do ano dos planetas.',
+    question: 'Marte está mais distante do Sol que a Terra. Seu ano é…',
+    choices: ['Mais curto que o da Terra', 'Próximo de 1 ano', 'Mais longo que o da Terra'], correct: 2,
+    explanation: 'Marte leva cerca de 1,88 anos terrestres para completar uma órbita. Pela 3ª lei de Kepler, um semieixo maior corresponde a um período maior quando a massa central é a mesma.',
+    steps: ['Compare as distâncias médias de Terra e Marte no painel de dados.', 'Compare os períodos orbitais mostrados nos mesmos painéis.', 'Use o experimento para testar uma órbita de 1,52 AU ao redor de uma massa solar.'],
+  },
+  {
+    title: 'Velocidade em uma órbita', target: 'Mercúrio',
+    objective: 'Investigar como a velocidade circular depende da distância e da gravidade central.',
+    question: 'Na mesma estrela, um corpo em órbita circular mais distante se move…',
+    choices: ['Mais devagar', 'Com a mesma velocidade', 'Mais rápido'], correct: 0,
+    explanation: 'Para uma órbita circular, v = √(GM/r). A gravidade fornece a aceleração centrípeta; aumentando r, a velocidade orbital circular diminui.',
+    steps: ['Preveja o sentido da mudança antes de mexer nos controles.', 'Mantenha a massa central em 1 massa solar.', 'Aumente a distância orbital e observe velocidade e gráfico de posição.'],
+  },
 ]
 
 // Pré-carrega TODAS as texturas (uma chamada por URL, para bater com a chave de cache do useTexture).
@@ -627,6 +661,7 @@ function MoonOrbits({ planetSize, moons, enabled, force }: { planetSize: number;
 function Planet({
   data,
   selected,
+  showLabels,
   observing,
   closeUpActive,
   onSelect,
@@ -638,6 +673,7 @@ function Planet({
 }: {
   data: PlanetData
   selected: boolean
+  showLabels: boolean
   observing: boolean
   closeUpActive: boolean
   onSelect: () => void
@@ -774,13 +810,13 @@ function Planet({
               onSelect={() => onMoonSelect(moon, data)}
               planetSize={data.size}
               clock={clock}
-              showLabel={closeUpActive}
+              showLabel={showLabels && closeUpActive}
               detail={Math.min(40, detail)}
             />
           </Suspense>
         ))}
 
-        {!observing && (
+        {showLabels && !observing && (
           <Html center distanceFactor={18}>
             <button
               className={`space-label planet-label ${selected ? 'active' : ''}`}
@@ -856,6 +892,7 @@ function AsteroidBelt({
 
 function Scene({
   selected,
+  showLabels,
   followName,
   closeUp,
   onSelect,
@@ -866,6 +903,7 @@ function Scene({
   onFollowEnd,
 }: {
   selected: string
+  showLabels: boolean
   followName: string | null
   closeUp: string | null
   onSelect: (planet: PlanetData) => void
@@ -934,6 +972,7 @@ function Scene({
           key={planet.name}
           data={planet}
           selected={selected === planet.name}
+          showLabels={showLabels}
           observing={
             followName === planet.name ||
             closeUp === planet.name
@@ -980,11 +1019,86 @@ function Scene({
   )
 }
 
+function KeplerExperiment({ semimajorAxis, centralMass, playing }: { semimajorAxis: number; centralMass: number; playing: boolean }) {
+  const [phase, setPhase] = useState(0)
+  const [graphMode, setGraphMode] = useState<'position' | 'velocity'>('position')
+  const period = Math.sqrt(semimajorAxis ** 3 / centralMass)
+  const orbitalSpeed = 29.78 * Math.sqrt(centralMass / semimajorAxis)
+  const visualPeriodSeconds = Math.min(20, Math.max(2, period * 2))
+
+  useEffect(() => {
+    if (!playing) return
+    const timer = window.setInterval(() => {
+      setPhase((value) => (value + 0.05 / visualPeriodSeconds) % 1)
+    }, 50)
+    return () => window.clearInterval(timer)
+  }, [playing, visualPeriodSeconds])
+
+  const currentAngle = phase * Math.PI * 2
+  const orbitRadius = 30 + semimajorAxis * 4.5
+  const centerX = 140
+  const centerY = 66
+  const orbitX = centerX + Math.cos(currentAngle) * orbitRadius
+  const orbitY = centerY + Math.sin(currentAngle) * orbitRadius
+  const samples = Array.from({ length: 81 }, (_, index) => index / 80)
+  const graphY = (sample: number) => {
+    const angle = sample * Math.PI * 2
+    return 65 - (graphMode === 'position' ? Math.cos(angle) : -Math.sin(angle)) * 42
+  }
+  const graphX = 14 + phase * 292
+  const graphCurrentY = graphY(phase)
+  const graphPath = samples.map((sample, index) => `${index === 0 ? 'M' : 'L'} ${14 + sample * 292} ${graphY(sample)}`).join(' ')
+  const currentValue = graphMode === 'position'
+    ? `${(semimajorAxis * Math.cos(currentAngle)).toFixed(2)} AU`
+    : `${(-orbitalSpeed * Math.sin(currentAngle)).toFixed(2)} km/s`
+
+  return (
+    <div className="kepler-experiment">
+      <div className="experiment-heading">
+        <div><span className="guide-kicker">MODELO DE DOIS CORPOS</span><strong>Órbita circular idealizada</strong></div>
+        <span className="experiment-status"><i className={playing ? 'running' : ''} />{playing ? 'RODANDO' : 'PAUSADO'}</span>
+      </div>
+      <svg className="orbit-diagram" viewBox="0 0 280 132" role="img" aria-label={`Diagrama orbital; posição atual ${currentValue}`}>
+        <line x1="18" y1={centerY} x2="262" y2={centerY} />
+        <line x1={centerX} y1="8" x2={centerX} y2="124" />
+        <circle className="orbit-track" cx={centerX} cy={centerY} r={orbitRadius} />
+        <circle className="orbit-star" cx={centerX} cy={centerY} r={5 + centralMass * 2.5} />
+        <circle className="orbit-body" cx={orbitX} cy={orbitY} r="5" />
+        <text x="18" y="126">TRAJETO ESQUEMÁTICO · NÃO ESTÁ EM ESCALA</text>
+      </svg>
+      <div className="experiment-metrics">
+        <div><small>PERÍODO CALCULADO</small><strong>{period.toFixed(2)} anos</strong></div>
+        <div><small>VELOCIDADE CIRCULAR</small><strong>{orbitalSpeed.toFixed(2)} km/s</strong></div>
+      </div>
+      <div className="graph-heading">
+        <span>{graphMode === 'position' ? 'POSIÇÃO X × TEMPO' : 'VELOCIDADE X × TEMPO'}</span>
+        <strong>{currentValue}</strong>
+      </div>
+      <svg className="orbit-graph" viewBox="0 0 320 92" role="img" aria-label={`${graphMode === 'position' ? 'Posição x' : 'Velocidade x'} ao longo de um período orbital`}>
+        <line x1="14" y1="65" x2="306" y2="65" />
+        <line x1="14" y1="14" x2="14" y2="82" />
+        <path d={graphPath} />
+        <line className="graph-playhead" x1={graphX} y1="13" x2={graphX} y2="82" />
+        <circle className="graph-current" cx={graphX} cy={graphCurrentY} r="4" />
+        <text x="14" y="90">0</text><text x="286" y="90">1 período</text>
+      </svg>
+      <div className="graph-switches">
+        <button className={graphMode === 'position' ? 'selected' : ''} aria-pressed={graphMode === 'position'} onClick={() => setGraphMode('position')}>Posição x</button>
+        <button className={graphMode === 'velocity' ? 'selected' : ''} aria-pressed={graphMode === 'velocity'} onClick={() => setGraphMode('velocity')}>Velocidade x</button>
+        <button className="graph-reset" onClick={() => setPhase(0)}><RotateCcw size={12} /> Reiniciar fase</button>
+      </div>
+      <p className="experiment-caveat">Tempo visual comprimido. O modelo considera órbita circular e massa do corpo orbitante desprezível diante da massa central.</p>
+      <a className="fact-source" href="https://science.nasa.gov/solar-system/orbits-and-keplers-laws/" target="_blank" rel="noreferrer">Referência: leis de Kepler · NASA</a>
+    </div>
+  )
+}
+
 export default function SolarSystemExplorer() {
   const [selected, setSelected] = useState<PlanetData>(planets[5])
   const [selectedMoon, setSelectedMoon] = useState<MoonSelection | null>(null)
   const [infoOpen, setInfoOpen] = useState(true)
   const [showOrbits, setShowOrbits] = useState(true)
+  const [showLabels, setShowLabels] = useState(true)
   const [belt, setBelt] = useState(true)
   const [playing, setPlaying] = useState(true)
   const [speed, setSpeed] = useState(1000)
@@ -995,10 +1109,18 @@ export default function SolarSystemExplorer() {
   const [searchOpen, setSearchOpen] = useState(false)
   const [simulationOpen, setSimulationOpen] = useState(false)
   const [guidedOpen, setGuidedOpen] = useState(false)
+  const [guideTab, setGuideTab] = useState<'lesson' | 'experiment'>('lesson')
   const [compareOpen, setCompareOpen] = useState(false)
   const [compareA, setCompareA] = useState('Terra')
   const [compareB, setCompareB] = useState('Saturno')
-  const [guideIndex, setGuideIndex] = useState(0)
+  const [lessonIndex, setLessonIndex] = useState(0)
+  const [lessonStep, setLessonStep] = useState(0)
+  const [lessonChoice, setLessonChoice] = useState<number | null>(null)
+  const [lessonRevealed, setLessonRevealed] = useState(false)
+  const [experimentDistance, setExperimentDistance] = useState(1)
+  const [experimentMass, setExperimentMass] = useState(1)
+  const [experimentPlaying, setExperimentPlaying] = useState(true)
+  const [teacherMode, setTeacherMode] = useState(false)
   const [followName, setFollowName] = useState<string | null>(null)
   const [closeUp, setCloseUp] = useState<string | null>(null)
   const clock = useRef<SimClock>({ t: SIM_T0, speed: 1000, playing: true })
@@ -1010,7 +1132,7 @@ export default function SolarSystemExplorer() {
   useEffect(() => { if (progress >= 100 && !active) { const id = window.setTimeout(() => setReady(true), 350); return () => window.clearTimeout(id) } }, [progress, active])
   useEffect(() => { const id = window.setTimeout(() => setReady(true), 8000); return () => window.clearTimeout(id) }, [])
   // Esc sai da vista próxima / do seguimento
-  useEffect(() => { const h = (e: KeyboardEvent) => { if (e.key === 'Escape') { if (searchOpen) setSearchOpen(false); else if (compareOpen) { setCompareOpen(false); setInfoOpen(true) } else if (closeUp) { setCloseUp(null); setSelectedMoon(null) } else if (followName) setFollowName(null) } }; window.addEventListener('keydown', h); return () => window.removeEventListener('keydown', h) }, [closeUp, compareOpen, followName, searchOpen])
+  useEffect(() => { const h = (e: KeyboardEvent) => { if (e.key === 'Escape') { if (teacherMode) setTeacherMode(false); else if (searchOpen) setSearchOpen(false); else if (compareOpen) { setCompareOpen(false); setInfoOpen(true) } else if (closeUp) { setCloseUp(null); setSelectedMoon(null) } else if (followName) setFollowName(null) } }; window.addEventListener('keydown', h); return () => window.removeEventListener('keydown', h) }, [closeUp, compareOpen, followName, searchOpen, teacherMode])
   useEffect(() => {
     const handleSearchShortcut = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
@@ -1036,8 +1158,24 @@ export default function SolarSystemExplorer() {
     setFollowName(null)
     setCloseUp(item.moon ? item.planet.name : null)
   }
-  const guideStop = guideStops[guideIndex]
-  const guidePlanet = planets.find((planet) => planet.name === guideStop.name) ?? planets[0]
+  const lesson = lessons[lessonIndex]
+  const lessonPlanet = planets.find((planet) => planet.name === lesson.target) ?? planets[0]
+  const chooseLesson = (index: number) => {
+    setLessonIndex(index)
+    setLessonStep(0)
+    setLessonChoice(null)
+    setLessonRevealed(false)
+  }
+  const toggleTeacherMode = () => {
+    const entering = !teacherMode
+    setTeacherMode(entering)
+    if (entering) {
+      setPlaying(false)
+      clock.current.playing = false
+      setSearchOpen(false); setLayers(false); setHand(false); setSimulationOpen(false); setGuidedOpen(false); setCompareOpen(false)
+      setInfoOpen(false); setSelectedMoon(null); setCloseUp(null); setFollowName(null)
+    }
+  }
   const changeSelectedPlanet = (offset: number) => {
     const currentIndex = planets.findIndex((planet) => planet.name === selected.name)
     const nextIndex = (currentIndex + offset + planets.length) % planets.length
@@ -1067,10 +1205,10 @@ export default function SolarSystemExplorer() {
   const comparedA = catalogObjects.find((item) => item.name === compareA) ?? catalogObjects[0]
   const comparedB = catalogObjects.find((item) => item.name === compareB) ?? catalogObjects[1]
   return (
-    <main className={`explorer ${closeUp ? 'is-closeup' : ''}`}>
+    <main className={`explorer ${closeUp ? 'is-closeup' : ''} ${teacherMode ? 'teacher-mode' : ''}`}>
       {!ready && <div className="loader-overlay" role="status" aria-live="polite"><div className="loader-box"><Orbit className="loader-spin" size={28} /><span>CARREGANDO TEXTURAS · {Math.round(progress)}%</span><div className="loader-track"><div className="loader-fill" style={{ width: `${progress}%` }} /></div></div></div>}
       <div className="scene">
-        <Scene selected={selected.name} followName={followName} closeUp={closeUp}
+        <Scene selected={selected.name} showLabels={showLabels} followName={followName} closeUp={closeUp}
           onSelect={(p) => { setSelected(p); setSelectedMoon(null); setInfoOpen(true); setFollowName(null); setCloseUp(p.name) }}
           onMoonSelect={(moon, planet) => { setSelected(planet); setSelectedMoon({ moon, planet }); setInfoOpen(true); setFollowName(null); setCloseUp(planet.name) }}
           showOrbits={showOrbits} belt={belt} clock={clock} onFollowEnd={() => setFollowName(null)} />
@@ -1097,6 +1235,10 @@ export default function SolarSystemExplorer() {
           ESCALA REPRESENTATIVA
         </div>
 
+        <button className={`teacher-toggle ${teacherMode ? 'active' : ''}`} aria-pressed={teacherMode} onClick={toggleTeacherMode}>
+          <Presentation size={15} /> {teacherMode ? 'SAIR DO MODO PROFESSOR' : 'MODO PROFESSOR'}
+        </button>
+
         <button
           className="icon-button fullscreen-button"
           aria-label="Alternar tela cheia"
@@ -1105,6 +1247,16 @@ export default function SolarSystemExplorer() {
           <Maximize2 size={16} />
         </button>
       </header>
+
+      {teacherMode && <section className="teacher-toolbar" aria-label="Controles do modo professor">
+        <div className="teacher-toolbar-title"><Presentation size={15} /><span>MODO PROFESSOR</span><small>{playing ? 'SIMULAÇÃO ATIVA' : 'SIMULAÇÃO PAUSADA'}</small></div>
+        <button onClick={() => setPlaying(!playing)} aria-label={playing ? 'Pausar simulação' : 'Iniciar simulação'}>{playing ? <Pause size={15} /> : <Play size={15} />}{playing ? 'PAUSAR' : 'INICIAR'}</button>
+        <button className={showOrbits ? 'selected' : ''} aria-pressed={showOrbits} onClick={() => setShowOrbits(!showOrbits)}><Orbit size={14} /> ÓRBITAS</button>
+        <button className={showLabels ? 'selected' : ''} aria-pressed={showLabels} onClick={() => setShowLabels(!showLabels)}>{showLabels ? <Check size={14} /> : <X size={14} />} NOMES</button>
+        <button className={belt ? 'selected' : ''} aria-pressed={belt} onClick={() => setBelt(!belt)}><span className="mini-dot" /> CINTURÃO</button>
+        <button className={infoOpen ? 'selected' : ''} aria-pressed={infoOpen} onClick={() => setInfoOpen(!infoOpen)}><BookOpen size={14} /> DADOS</button>
+        <button className="teacher-exit" onClick={toggleTeacherMode}>ENCERRAR <X size={14} /></button>
+      </section>}
 
       <aside className="left-rail">
         <button className={`rail-button ${searchOpen ? 'active' : ''}`} aria-pressed={searchOpen} aria-label="Abrir busca" onClick={() => { setSearchOpen(!searchOpen); setLayers(false); setHand(false); setSimulationOpen(false); setGuidedOpen(false); setCompareOpen(false); setInfoOpen(true) }}><Search size={17} /><span>BUSCA</span></button>
@@ -1423,17 +1575,40 @@ export default function SolarSystemExplorer() {
       {guidedOpen && (
         <section className="guide-panel">
           <div className="panel-header">
-            <div><span className="eyebrow">ROTEIRO DE DESCOBERTA</span><h2>Parada {guideIndex + 1} de {guideStops.length}</h2></div>
+            <div><span className="eyebrow">FERRAMENTAS DE AULA</span><h2>{guideTab === 'lesson' ? 'Roteiro guiado' : 'Experimento orbital'}</h2></div>
             <button className="close-small" aria-label="Fechar guia" onClick={() => setGuidedOpen(false)}><X size={15} /></button>
           </div>
-          <div className="guide-destination">
-            <span className="guide-kicker">PRÓXIMO DESTINO</span>
-            <strong>{guideStop.name}</strong>
-            <p>{guideStop.fact}</p>
+          <div className="classroom-tabs" role="tablist" aria-label="Ferramentas de aula">
+            <button role="tab" aria-selected={guideTab === 'lesson'} className={guideTab === 'lesson' ? 'selected' : ''} onClick={() => setGuideTab('lesson')}><BookOpen size={14} /> AULA</button>
+            <button role="tab" aria-selected={guideTab === 'experiment'} className={guideTab === 'experiment' ? 'selected' : ''} onClick={() => setGuideTab('experiment')}><Atom size={14} /> EXPERIMENTO</button>
           </div>
-          <a className="fact-source" href="https://science.nasa.gov/solar-system/planets/" target="_blank" rel="noreferrer">Curiosidades: NASA Solar System</a>
-          <button className="travel-button" onClick={() => { setSelected(guidePlanet); setSelectedMoon(null); setInfoOpen(true); setCloseUp(null); setFollowName(guidePlanet.name) }}><Crosshair size={15} /> VIAJAR ATÉ {guideStop.name.toUpperCase()} <ChevronRight size={15} /></button>
-          <button className="guide-next" onClick={() => setGuideIndex((index) => (index + 1) % guideStops.length)}>PRÓXIMA CURIOSIDADE <ChevronRight size={14} /></button>
+
+          {guideTab === 'lesson' ? <div className="lesson-content">
+            <label className="lesson-picker">ROTEIRO<select value={lessonIndex} onChange={(event) => chooseLesson(Number(event.target.value))}>{lessons.map((item, index) => <option key={item.title} value={index}>{index + 1}. {item.title}</option>)}</select></label>
+            <div className="lesson-objective"><span className="guide-kicker">OBJETIVO</span><p>{lesson.objective}</p></div>
+            <div className="lesson-step-count">ETAPA {lessonStep + 1} DE {lesson.steps.length}</div>
+            <p className="lesson-step-text">{lesson.steps[lessonStep]}</p>
+            <div className="lesson-step-actions">
+              <button disabled={lessonStep === 0} onClick={() => setLessonStep((step) => Math.max(0, step - 1))}><ChevronLeft size={13} /> ANTERIOR</button>
+              <button disabled={lessonStep === lesson.steps.length - 1} onClick={() => setLessonStep((step) => Math.min(lesson.steps.length - 1, step + 1))}>PRÓXIMA <ChevronRight size={13} /></button>
+            </div>
+            <div className="prediction-block">
+              <span className="guide-kicker">FAÇA SUA PREVISÃO</span>
+              <strong>{lesson.question}</strong>
+              <div className="prediction-choices">{lesson.choices.map((choice, index) => <button key={choice} className={`${lessonChoice === index ? 'chosen' : ''} ${lessonRevealed && index === lesson.correct ? 'correct' : ''} ${lessonRevealed && lessonChoice === index && index !== lesson.correct ? 'incorrect' : ''}`} aria-pressed={lessonChoice === index} disabled={lessonRevealed} onClick={() => setLessonChoice(index)}>{choice}</button>)}</div>
+              {!lessonRevealed ? <button className="reveal-answer" disabled={lessonChoice === null} onClick={() => { setLessonRevealed(true); setPlaying(false) }}>CONFERIR PREVISÃO <Check size={14} /></button> : <div className={`answer-feedback ${lessonChoice === lesson.correct ? 'correct' : 'incorrect'}`}><strong>{lessonChoice === lesson.correct ? 'PREVISÃO CORRETA' : 'COMPARE COM O RESULTADO'}</strong><p>{lesson.explanation}</p></div>}
+            </div>
+            <button className="travel-button lesson-travel" onClick={() => { setSelected(lessonPlanet); setSelectedMoon(null); setInfoOpen(true); setCloseUp(null); setFollowName(lessonPlanet.name) }}><Crosshair size={14} /> ENQUADRAR {lesson.target.toUpperCase()} <ChevronRight size={14} /></button>
+            <a className="fact-source" href="https://science.nasa.gov/solar-system/orbits-and-keplers-laws/" target="_blank" rel="noreferrer">Base conceitual: leis de Kepler · NASA</a>
+          </div> : <div className="experiment-content">
+            <p className="experiment-intro">Altere os parâmetros e observe o período, a velocidade circular e a evolução de uma componente do movimento.</p>
+            <label className="experiment-slider"><span>MASSA CENTRAL <strong>{experimentMass.toFixed(1)} M☉</strong></span><input aria-label="Massa da estrela em massas solares" type="range" min="0.2" max="3" step="0.1" value={experimentMass} onChange={(event) => setExperimentMass(Number(event.target.value))} /></label>
+            <label className="experiment-slider"><span>SEMIEIXO MAIOR <strong>{experimentDistance.toFixed(1)} AU</strong></span><input aria-label="Semieixo maior em unidades astronômicas" type="range" min="0.3" max="5" step="0.1" value={experimentDistance} onChange={(event) => setExperimentDistance(Number(event.target.value))} /></label>
+            <div className="experiment-equation"><span>3ª LEI DE KEPLER · UNIDADES SOLARES</span><strong>T² = a³ / M</strong><small>T em anos · a em AU · M em massas solares</small></div>
+            <KeplerExperiment semimajorAxis={experimentDistance} centralMass={experimentMass} playing={experimentPlaying} />
+            <button className="experiment-play" onClick={() => setExperimentPlaying(!experimentPlaying)}>{experimentPlaying ? <Pause size={14} /> : <Play size={14} />}{experimentPlaying ? 'PAUSAR EXPERIMENTO' : 'RODAR EXPERIMENTO'}</button>
+            <p className="experiment-source-note">Este laboratório é um modelo matemático simplificado e independente da animação 3D do Sistema Solar.</p>
+          </div>}
         </section>
       )}
 
