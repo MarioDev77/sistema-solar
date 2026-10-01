@@ -5,7 +5,7 @@ import { OrbitControls, Stars, Html, Line, Sparkles, useTexture, useProgress } f
 import { Suspense, useCallback, useLayoutEffect, useMemo, useRef, useState, useEffect, type RefObject } from 'react'
 import * as THREE from 'three'
 import { Planet as TexturedPlanet, FlatPlanet } from './planet'
-import { Search, Orbit, Hand, Play, Pause, RotateCcw, Maximize2, Crosshair, ChevronRight, X, Layers3, Camera, MousePointer2, ZoomIn, ArrowLeft, Compass } from 'lucide-react'
+import { Search, Orbit, Hand, Play, Pause, RotateCcw, Maximize2, Crosshair, ChevronLeft, ChevronRight, X, Layers3, Camera, MousePointer2, ZoomIn, ArrowLeft, Compass } from 'lucide-react'
 
 const textures: Record<string, string> = {
   mercury: '/textures/mercury.jpg',
@@ -935,7 +935,7 @@ function Scene({
 }
 
 export default function SolarSystemExplorer() {
-  const [selected, setSelected] = useState<PlanetData>(planets[5]); const [showOrbits, setShowOrbits] = useState(true); const [belt, setBelt] = useState(true); const [playing, setPlaying] = useState(true); const [speed, setSpeed] = useState(1000); const [query, setQuery] = useState(''); const [hand, setHand] = useState(false); const [cameraActive, setCameraActive] = useState(false); const [layers, setLayers] = useState(false); const [searchOpen, setSearchOpen] = useState(true); const [simulationOpen, setSimulationOpen] = useState(false); const [guidedOpen, setGuidedOpen] = useState(false); const [guideIndex, setGuideIndex] = useState(0); const [followName, setFollowName] = useState<string | null>(null); const [closeUp, setCloseUp] = useState<string | null>(null)
+  const [selected, setSelected] = useState<PlanetData>(planets[5]); const [infoOpen, setInfoOpen] = useState(true); const [showOrbits, setShowOrbits] = useState(true); const [belt, setBelt] = useState(true); const [playing, setPlaying] = useState(true); const [speed, setSpeed] = useState(1000); const [query, setQuery] = useState(''); const [hand, setHand] = useState(false); const [cameraActive, setCameraActive] = useState(false); const [layers, setLayers] = useState(false); const [searchOpen, setSearchOpen] = useState(false); const [simulationOpen, setSimulationOpen] = useState(false); const [guidedOpen, setGuidedOpen] = useState(false); const [guideIndex, setGuideIndex] = useState(0); const [followName, setFollowName] = useState<string | null>(null); const [closeUp, setCloseUp] = useState<string | null>(null)
   const clock = useRef<SimClock>({ t: SIM_T0, speed: 1000, playing: true })
   const streamRef = useRef<MediaStream | null>(null)
   const { progress, active } = useProgress(); const [ready, setReady] = useState(false)
@@ -945,7 +945,7 @@ export default function SolarSystemExplorer() {
   useEffect(() => { if (progress >= 100 && !active) { const id = window.setTimeout(() => setReady(true), 350); return () => window.clearTimeout(id) } }, [progress, active])
   useEffect(() => { const id = window.setTimeout(() => setReady(true), 8000); return () => window.clearTimeout(id) }, [])
   // Esc sai da vista próxima / do seguimento
-  useEffect(() => { const h = (e: KeyboardEvent) => { if (e.key === 'Escape') { if (closeUp) setCloseUp(null); else if (followName) setFollowName(null) } }; window.addEventListener('keydown', h); return () => window.removeEventListener('keydown', h) }, [closeUp, followName])
+  useEffect(() => { const h = (e: KeyboardEvent) => { if (e.key === 'Escape') { if (searchOpen) setSearchOpen(false); else if (closeUp) setCloseUp(null); else if (followName) setFollowName(null) } }; window.addEventListener('keydown', h); return () => window.removeEventListener('keydown', h) }, [closeUp, followName, searchOpen])
   useEffect(() => {
     const handleSearchShortcut = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
@@ -968,6 +968,14 @@ export default function SolarSystemExplorer() {
   })
   const guideStop = guideStops[guideIndex]
   const guidePlanet = planets.find((planet) => planet.name === guideStop.name) ?? planets[0]
+  const changeSelectedPlanet = (offset: number) => {
+    const currentIndex = planets.findIndex((planet) => planet.name === selected.name)
+    const nextIndex = (currentIndex + offset + planets.length) % planets.length
+    setSelected(planets[nextIndex])
+    setInfoOpen(true)
+    setFollowName(null)
+    setCloseUp(null)
+  }
   const toggleCamera = async () => {
     if (cameraActive) { streamRef.current?.getTracks().forEach(t => t.stop()); streamRef.current = null; setCameraActive(false); return }
     try { streamRef.current = await navigator.mediaDevices.getUserMedia({ video: true }); setCameraActive(true) } catch { setCameraActive(false) }
@@ -989,7 +997,7 @@ export default function SolarSystemExplorer() {
       {!ready && <div className="loader-overlay" role="status" aria-live="polite"><div className="loader-box"><Orbit className="loader-spin" size={28} /><span>CARREGANDO TEXTURAS · {Math.round(progress)}%</span><div className="loader-track"><div className="loader-fill" style={{ width: `${progress}%` }} /></div></div></div>}
       <div className="scene">
         <Scene selected={selected.name} followName={followName} closeUp={closeUp}
-          onSelect={(p) => { setSelected(p); setFollowName(null); setCloseUp(p.name) }}
+          onSelect={(p) => { setSelected(p); setInfoOpen(true); setFollowName(null); setCloseUp(p.name) }}
           showOrbits={showOrbits} belt={belt} clock={clock} onFollowEnd={() => setFollowName(null)} />
       </div>
 
@@ -1024,7 +1032,7 @@ export default function SolarSystemExplorer() {
       </header>
 
       <aside className="left-rail">
-        <button className={`rail-button ${searchOpen ? 'active' : ''}`} aria-pressed={searchOpen} onClick={() => { setSearchOpen(!searchOpen); setLayers(false); setHand(false); setSimulationOpen(false); setGuidedOpen(false) }}><Crosshair size={17} /><span>EXPLORAR</span></button>
+        <button className={`rail-button ${searchOpen ? 'active' : ''}`} aria-pressed={searchOpen} aria-label="Abrir busca" onClick={() => { setSearchOpen(!searchOpen); setLayers(false); setHand(false); setSimulationOpen(false); setGuidedOpen(false) }}><Search size={17} /><span>BUSCA</span></button>
         <button className={`rail-button ${layers ? 'active' : ''}`} aria-pressed={layers} onClick={() => { setLayers(!layers); setSearchOpen(false); setHand(false); setSimulationOpen(false); setGuidedOpen(false) }}><Layers3 size={17} /><span>CAMADAS</span></button>
         <button className={`rail-button ${simulationOpen ? 'active' : ''}`} aria-pressed={simulationOpen} onClick={() => { setSimulationOpen(!simulationOpen); setSearchOpen(false); setLayers(false); setHand(false); setGuidedOpen(false) }}><Orbit size={17} /><span>TEMPO</span></button>
         <button className={`rail-button ${guidedOpen ? 'active' : ''}`} aria-pressed={guidedOpen} onClick={() => { setGuidedOpen(!guidedOpen); setSearchOpen(false); setLayers(false); setHand(false); setSimulationOpen(false) }}><Compass size={17} /><span>GUIA</span></button>
@@ -1038,58 +1046,46 @@ export default function SolarSystemExplorer() {
             <span>CÂMERA</span>
           </button>
         </div>
+        {searchOpen && <section className="search-panel" aria-label="Buscar planetas e luas">
+          <div className="search-panel-heading">
+            <span className="eyebrow">BUSCAR OBJETO</span>
+            <button className="close-small" aria-label="Fechar busca" onClick={() => setSearchOpen(false)}><X size={15} /></button>
+          </div>
+          <div className="search-box">
+            <Search size={16} />
+            <input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Planeta ou lua..."
+              aria-label="Buscar planeta ou lua"
+            />
+            <kbd>⌘ K</kbd>
+          </div>
+          {query && (
+            <div className="search-results">
+              {searchResults.map((item) => (
+                <button
+                  key={`${item.kind}-${item.name}`}
+                  onClick={() => {
+                    setSelected(item.planet)
+                    setInfoOpen(true)
+                    setFollowName(null)
+                    setCloseUp(null)
+                    setSearchOpen(false)
+                    setQuery('')
+                  }}
+                >
+                  <span>{item.name}<small className="search-kind">{item.kind}</small></span>
+                  <ChevronRight size={14} />
+                </button>
+              ))}
+              {searchResults.length === 0 && <p className="search-empty">Nenhum planeta ou lua encontrado.</p>}
+            </div>
+          )}
+        </section>}
       </aside>
 
-      {searchOpen && <section className="search-panel">
-        <div className="eyebrow">NAVEGAÇÃO ESPACIAL</div>
-
-        <h1>
-          Explore o
-          <br />
-          <span>Sistema Solar</span>
-        </h1>
-
-        <div className="search-box">
-          <Search size={16} />
-          <input
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Buscar objeto..."
-            aria-label="Buscar objeto do Sistema Solar"
-          />
-          <kbd>⌘ K</kbd>
-        </div>
-
-        <p className="scale-note">
-          <Orbit size={12} />
-          <span>
-            Tamanhos e distâncias são representativos,
-            não proporcionais à escala real.
-          </span>
-        </p>
-
-        {query && (
-          <div className="search-results">
-            {searchResults.map((item) => (
-              <button
-                key={`${item.kind}-${item.name}`}
-                onClick={() => {
-                  setSelected(item.planet)
-                  setFollowName(null)
-                  setCloseUp(null)
-                  setQuery('')
-                }}
-              >
-                <span>{item.name}<small className="search-kind">{item.kind}</small></span>
-                <ChevronRight size={14} />
-              </button>
-            ))}
-            {searchResults.length === 0 && <p className="search-empty">Nenhum planeta ou lua encontrado.</p>}
-          </div>
-        )}
-      </section>}
-
-      <section className="info-panel"><div className="panel-header"><div><span className="eyebrow">OBJETO SELECIONADO</span><h2>{selected.name}</h2></div><span className="planet-index">0{planets.indexOf(selected) + 1} / 0{planets.length}</span></div><div className="planet-orb" style={textures[selected.key] ? { backgroundImage: `url(${textures[selected.key]})` } : { backgroundColor: selected.color }}><div className="orb-glow" /></div>
+      {infoOpen && <section className="info-panel"><div className="panel-header"><div><span className="eyebrow">OBJETO SELECIONADO</span><h2>{selected.name}</h2></div><div className="planet-panel-actions"><span className="planet-index">0{planets.indexOf(selected) + 1} / 0{planets.length}</span><button className="planet-nav" aria-label="Planeta anterior" onClick={() => changeSelectedPlanet(-1)}><ChevronLeft size={16} /></button><button className="planet-nav" aria-label="Próximo planeta" onClick={() => changeSelectedPlanet(1)}><ChevronRight size={16} /></button><button className="close-small" aria-label="Fechar dados do planeta e voltar à visão geral" onClick={() => { setInfoOpen(false); setCloseUp(null); setFollowName(null) }}><X size={16} /></button></div></div><div className="planet-orb" style={textures[selected.key] ? { backgroundImage: `url(${textures[selected.key]})` } : { backgroundColor: selected.color }}><div className="orb-glow" /></div>
         <div className="object-meta">
           <span className="tag">{selected.type}</span>
           <span className="meta-line">
@@ -1101,7 +1097,7 @@ export default function SolarSystemExplorer() {
         <a className="fact-source" href="https://nssdc.gsfc.nasa.gov/planetary/factsheet/" target="_blank" rel="noreferrer">Dados: NASA Goddard · Fact Sheet</a>
         <button className="travel-button" onClick={() => { setCloseUp(null); setFollowName(selected.name) }}><Crosshair size={15} /> VIAJAR ATÉ OBJETO <ChevronRight size={15} /></button>
         <button className="travel-button secondary" onClick={() => { setFollowName(null); setCloseUp(selected.name) }}><ZoomIn size={15} /> OBSERVAR DE PERTO <ChevronRight size={15} /></button>
-      </section>
+      </section>}
 
       {/* Barra da vista próxima: voltar, atmosfera e luas visíveis */}
       {closeUp && closeUpPlanet && (
@@ -1302,7 +1298,7 @@ export default function SolarSystemExplorer() {
             <p>{guideStop.fact}</p>
           </div>
           <a className="fact-source" href="https://science.nasa.gov/solar-system/planets/" target="_blank" rel="noreferrer">Curiosidades: NASA Solar System</a>
-          <button className="travel-button" onClick={() => { setSelected(guidePlanet); setCloseUp(null); setFollowName(guidePlanet.name) }}><Crosshair size={15} /> VIAJAR ATÉ {guideStop.name.toUpperCase()} <ChevronRight size={15} /></button>
+          <button className="travel-button" onClick={() => { setSelected(guidePlanet); setInfoOpen(true); setCloseUp(null); setFollowName(guidePlanet.name) }}><Crosshair size={15} /> VIAJAR ATÉ {guideStop.name.toUpperCase()} <ChevronRight size={15} /></button>
           <button className="guide-next" onClick={() => setGuideIndex((index) => (index + 1) % guideStops.length)}>PRÓXIMA CURIOSIDADE <ChevronRight size={14} /></button>
         </section>
       )}
