@@ -1,0 +1,9 @@
+Créditos das texturas
+
+pluto.jpg — NASA/JHUAPL/SwRI, “Pluto Global Color Map” (mosaico da missão New Horizons):
+https://science.nasa.gov/resource/pluto-global-color-map/
+
+charon.jpg — NASA/JPL-Caltech, mapa de textura do simulador JPL, criado por Don Davis e descrito pela própria página como fictício:
+https://maps.jpl.nasa.gov/tmaps/pluto.html
+
+As imagens foram mantidas nos caminhos já usados pelo projeto. Saturno e Netuno foram preservados porque as opções esféricas encontradas no catálogo JPL são mapas representativos/fictícios e têm resolução inferior às texturas existentes.
