@@ -5,7 +5,7 @@ import { OrbitControls, Stars, Html, Line, Sparkles, useTexture, useProgress } f
 import { Suspense, useCallback, useLayoutEffect, useMemo, useRef, useState, useEffect, type RefObject } from 'react'
 import * as THREE from 'three'
 import { Planet as TexturedPlanet, FlatPlanet } from './planet'
-import { Search, Orbit, Hand, Play, Pause, RotateCcw, Maximize2, Crosshair, ChevronLeft, ChevronRight, X, Layers3, Camera, MousePointer2, ZoomIn, ArrowLeft, Compass, ExternalLink, GitCompareArrows, Ruler, BookOpen, Atom, Presentation, Check } from 'lucide-react'
+import { Search, Orbit, Hand, Play, Pause, RotateCcw, Maximize2, Crosshair, ChevronLeft, ChevronRight, X, Layers3, Camera, MousePointer2, ZoomIn, ArrowLeft, Compass, ExternalLink, GitCompareArrows, Ruler, BookOpen, Atom, Presentation, Check, Telescope, Sparkles as SparklesIcon } from 'lucide-react'
 
 const textures: Record<string, string> = {
   mercury: '/textures/mercury.jpg',
@@ -146,6 +146,23 @@ const catalogObjects: CatalogObject[] = planets.flatMap((planet) => [
   { name: planet.name, kind: planet.type, planet },
   ...planet.moonList.map((moon) => ({ name: moon.name, kind: `Lua de ${planet.name}`, planet, moon })),
 ])
+
+type CosmosObject = { name: string; group: 'Nebulosa' | 'Corpo menor' | 'Região'; style: string; summary: string; detail: string; fact: string; source: string; sourceLabel: string }
+const cosmosObjects: CosmosObject[] = [
+  { name: 'Nebulosa de Órion', group: 'Nebulosa', style: 'orion', summary: 'Berçário de estrelas', detail: 'Uma nuvem de gás e poeira onde milhares de estrelas estão se formando. A radiação de estrelas jovens esculpe cavidades no material ao redor.', fact: 'Fica a cerca de 1.300 anos-luz da Terra.', source: 'https://science.nasa.gov/asset/hubble/orion-nebula-3/', sourceLabel: 'NASA · Hubble' },
+  { name: 'Nebulosa do Anel', group: 'Nebulosa', style: 'ring', summary: 'Restos de uma estrela como o Sol', detail: 'Uma nebulosa planetária: camadas externas ejetadas por uma estrela em fim de vida. O nome “planetária” é histórico; ela não é um planeta.', fact: 'Também chamada M57; fica a cerca de 2.500 anos-luz.', source: 'https://science.nasa.gov/asset/webb/ring-nebula-nircam-image/', sourceLabel: 'NASA · Webb' },
+  { name: 'Nebulosa do Caranguejo', group: 'Nebulosa', style: 'crab', summary: 'Remanescente de supernova', detail: 'Uma nuvem em expansão formada por uma explosão estelar. No centro, uma estrela de nêutrons remanescente alimenta a emissão da nebulosa.', fact: 'O evento que a originou foi observado por astrônomos em 1054.', source: 'https://science.nasa.gov/mission/hubble/science/explore-the-night-sky/hubble-messier-catalog/messier-1/', sourceLabel: 'NASA · Hubble' },
+  { name: 'Nebulosa da Águia', group: 'Nebulosa', style: 'eagle', summary: 'Pilares de gás e poeira', detail: 'Região de formação estelar famosa pelos Pilares da Criação. A imagem representa gás e poeira interestelares; não é um objeto do Sistema Solar.', fact: 'Os pilares são esculpidos pela radiação de estrelas jovens próximas.', source: 'https://science.nasa.gov/mission/hubble/science/explore-the-night-sky/hubble-messier-catalog/messier-16/', sourceLabel: 'NASA · Hubble' },
+  { name: 'Sol', group: 'Estrela', style: 'sun', summary: 'Estrela central do Sistema Solar', detail: 'O Sol é a estrela que fornece luz e energia ao Sistema Solar. Sua gravidade mantém planetas, planetas anões, cometas e outros corpos em órbita.', fact: 'Estudar atividade solar e vento solar é uma próxima expansão útil para as aulas.', source: 'https://science.nasa.gov/sun/', sourceLabel: 'NASA · Sol' },
+  { name: 'Plutão', group: 'Corpo menor', style: 'pluto', summary: 'Planeta anão do cinturão de Kuiper', detail: 'Mundo gelado com cinco luas conhecidas, explorado de perto pela missão New Horizons. Sua classificação como planeta anão ajuda a discutir como a ciência organiza categorias.', fact: 'Sua lua Caronte é grande em relação ao próprio Plutão.', source: 'https://science.nasa.gov/dwarf-planets/pluto/', sourceLabel: 'NASA · Plutão' },
+  { name: 'Ceres', group: 'Corpo menor', style: 'ceres', summary: 'Planeta anão do cinturão de asteroides', detail: 'O maior objeto do cinturão principal entre Marte e Júpiter. Ceres é classificado como planeta anão e foi visitado pela missão Dawn.', fact: 'Sua posição liga o estudo dos planetas anões ao cinturão de asteroides.', source: 'https://science.nasa.gov/dwarf-planets/ceres/', sourceLabel: 'NASA · Ceres' },
+  { name: 'Éris', group: 'Corpo menor', style: 'eris', summary: 'Planeta anão além de Netuno', detail: 'Um mundo gelado transnetuniano. A descoberta de Éris ajudou a motivar a definição moderna de planeta e a reclassificação de Plutão.', fact: 'Éris possui uma lua conhecida, Disnomia.', source: 'https://science.nasa.gov/dwarf-planets/eris/', sourceLabel: 'NASA · Éris' },
+  { name: 'Haumea', group: 'Corpo menor', style: 'haumea', summary: 'Planeta anão de rotação muito rápida', detail: 'Mundo transnetuniano alongado pela rotação rápida, com duas luas conhecidas e um anel.', fact: 'Sua rotação dura aproximadamente quatro horas.', source: 'https://science.nasa.gov/dwarf-planets/haumea/', sourceLabel: 'NASA · Haumea' },
+  { name: 'Makemake', group: 'Corpo menor', style: 'makemake', summary: 'Mundo gelado do cinturão de Kuiper', detail: 'Um dos maiores objetos conhecidos da região transnetuniana e um dos cinco planetas anões reconhecidos pela União Astronômica Internacional.', fact: 'Possui uma pequena lua conhecida informalmente como MK 2.', source: 'https://science.nasa.gov/dwarf-planets/makemake/', sourceLabel: 'NASA · Makemake' },
+  { name: 'Cometas', group: 'Corpo menor', style: 'comet', summary: 'Gelo, poeira e atividade solar', detail: 'Corpos ricos em gelo e poeira. Ao se aproximarem do Sol, liberam gás e poeira; a cauda aponta para longe do Sol, influenciada pela luz e pelo vento solar.', fact: 'Muitos cometas de período curto vêm da região do cinturão de Kuiper.', source: 'https://science.nasa.gov/solar-system/comets/facts/', sourceLabel: 'NASA · Cometas' },
+  { name: 'Cinturão de Kuiper', group: 'Região', style: 'kuiper', summary: 'Reservatório de mundos gelados', detail: 'Região em forma de disco além de Netuno, com corpos gelados, planetas anões e cometas. Sua faixa principal começa perto da órbita de Netuno.', fact: 'Plutão, Haumea e Makemake estão entre seus objetos conhecidos.', source: 'https://science.nasa.gov/solar-system/kuiper-belt/facts/', sourceLabel: 'NASA · Cinturão de Kuiper' },
+  { name: 'Nuvem de Oort', group: 'Região', style: 'oort', summary: 'Reservatório distante, ainda não observado diretamente', detail: 'Modelo de uma região muito distante e aproximadamente esférica que pode fornecer cometas de longo período. É importante marcar que sua estrutura é inferida, não fotografada diretamente.', fact: 'Não está representada na escala da cena 3D.', source: 'https://science.nasa.gov/solar-system/oort-cloud/', sourceLabel: 'NASA · Nuvem de Oort' },
+]
 
 type LessonPlan = {
   title: string
@@ -890,6 +907,42 @@ function AsteroidBelt({
   )
 }
 
+function KuiperBelt({ enabled, clock, count }: { enabled: boolean; clock: RefObject<SimClock>; count: number }) {
+  const ref = useRef<THREE.Group>(null)
+  const positions = useMemo(() => {
+    const particles = new Float32Array(count * 3)
+    for (let i = 0; i < count; i++) {
+      const angle = Math.random() * Math.PI * 2
+      const radius = 22.8 + Math.random() * 4.3
+      particles[i * 3] = Math.cos(angle) * radius
+      particles[i * 3 + 1] = (Math.random() - 0.5) * 0.8
+      particles[i * 3 + 2] = Math.sin(angle) * radius
+    }
+    return particles
+  }, [count])
+  useFrame(() => { if (ref.current) ref.current.rotation.y = clock.current.t * 0.0015 }, -2)
+  return <group ref={ref} visible={enabled}><points><bufferGeometry><bufferAttribute attach="attributes-position" args={[positions, 3]} /></bufferGeometry><pointsMaterial color="#86a9c5" size={0.055} sizeAttenuation transparent opacity={0.58} depthWrite={false} /></points></group>
+}
+
+function Comet({ enabled, clock }: { enabled: boolean; clock: RefObject<SimClock> }) {
+  const body = useRef<THREE.Group>(null)
+  const points = useMemo(() => Array.from({ length: 121 }, (_, i) => {
+    const angle = (i / 120) * Math.PI * 2
+    const a = 13.5; const e = 0.78
+    return new THREE.Vector3(a * (Math.cos(angle) - e), 0, a * Math.sqrt(1 - e * e) * Math.sin(angle))
+  }), [])
+  useFrame(() => {
+    if (!body.current) return
+    const angle = clock.current.t * 0.0015
+    const a = 13.5; const e = 0.78
+    const x = a * (Math.cos(angle) - e); const z = a * Math.sqrt(1 - e * e) * Math.sin(angle)
+    body.current.position.set(x, 0.08, z)
+    body.current.rotation.y = Math.atan2(-z, x)
+  }, -1)
+  if (!enabled) return null
+  return <group><Line points={points} color="#8bb8c8" transparent opacity={0.28} lineWidth={0.7} /><group ref={body}><mesh><sphereGeometry args={[0.12, 12, 12]} /><meshStandardMaterial color="#d9f3ed" emissive="#8bded5" emissiveIntensity={1.3} /></mesh><mesh position={[0.28, 0, 0]} rotation-z={-Math.PI / 2}><coneGeometry args={[0.11, 0.65, 12, 1, true]} /><meshBasicMaterial color="#92c9e8" transparent opacity={0.34} side={THREE.DoubleSide} depthWrite={false} /></mesh></group></group>
+}
+
 function Scene({
   selected,
   showLabels,
@@ -899,6 +952,8 @@ function Scene({
   onMoonSelect,
   showOrbits,
   belt,
+  kuiperBelt,
+  comets,
   clock,
   onFollowEnd,
 }: {
@@ -910,6 +965,8 @@ function Scene({
   onMoonSelect: (moon: MoonData, planet: PlanetData) => void
   showOrbits: boolean
   belt: boolean
+  kuiperBelt: boolean
+  comets: boolean
   clock: RefObject<SimClock>
   onFollowEnd: () => void
 }) {
@@ -992,6 +1049,8 @@ function Scene({
         clock={clock}
         count={quality === 'high' ? 800 : 420}
       />
+      <KuiperBelt enabled={kuiperBelt} clock={clock} count={quality === 'high' ? 1500 : 780} />
+      <Comet enabled={comets} clock={clock} />
 
       {/* mouse: arrastar/scroll/pan · toque: 1 dedo gira · 2 dedos pinça zoom e pan */}
       <OrbitControls
@@ -1100,6 +1159,8 @@ export default function SolarSystemExplorer() {
   const [showOrbits, setShowOrbits] = useState(true)
   const [showLabels, setShowLabels] = useState(true)
   const [belt, setBelt] = useState(true)
+  const [kuiperBelt, setKuiperBelt] = useState(false)
+  const [comets, setComets] = useState(false)
   const [playing, setPlaying] = useState(true)
   const [speed, setSpeed] = useState(1000)
   const [query, setQuery] = useState('')
@@ -1121,6 +1182,9 @@ export default function SolarSystemExplorer() {
   const [experimentMass, setExperimentMass] = useState(1)
   const [experimentPlaying, setExperimentPlaying] = useState(true)
   const [teacherMode, setTeacherMode] = useState(false)
+  const [cosmosOpen, setCosmosOpen] = useState(false)
+  const [cosmosTab, setCosmosTab] = useState<'nebula' | 'solar'>('nebula')
+  const [cosmosSelection, setCosmosSelection] = useState('Nebulosa de Órion')
   const [followName, setFollowName] = useState<string | null>(null)
   const [closeUp, setCloseUp] = useState<string | null>(null)
   const clock = useRef<SimClock>({ t: SIM_T0, speed: 1000, playing: true })
@@ -1132,12 +1196,12 @@ export default function SolarSystemExplorer() {
   useEffect(() => { if (progress >= 100 && !active) { const id = window.setTimeout(() => setReady(true), 350); return () => window.clearTimeout(id) } }, [progress, active])
   useEffect(() => { const id = window.setTimeout(() => setReady(true), 8000); return () => window.clearTimeout(id) }, [])
   // Esc sai da vista próxima / do seguimento
-  useEffect(() => { const h = (e: KeyboardEvent) => { if (e.key === 'Escape') { if (teacherMode) setTeacherMode(false); else if (searchOpen) setSearchOpen(false); else if (compareOpen) { setCompareOpen(false); setInfoOpen(true) } else if (closeUp) { setCloseUp(null); setSelectedMoon(null) } else if (followName) setFollowName(null) } }; window.addEventListener('keydown', h); return () => window.removeEventListener('keydown', h) }, [closeUp, compareOpen, followName, searchOpen, teacherMode])
+  useEffect(() => { const h = (e: KeyboardEvent) => { if (e.key === 'Escape') { if (teacherMode) setTeacherMode(false); else if (cosmosOpen) { setCosmosOpen(false); setInfoOpen(true) } else if (searchOpen) setSearchOpen(false); else if (compareOpen) { setCompareOpen(false); setInfoOpen(true) } else if (closeUp) { setCloseUp(null); setSelectedMoon(null) } else if (followName) setFollowName(null) } }; window.addEventListener('keydown', h); return () => window.removeEventListener('keydown', h) }, [closeUp, compareOpen, cosmosOpen, followName, searchOpen, teacherMode])
   useEffect(() => {
     const handleSearchShortcut = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
         event.preventDefault()
-        setSearchOpen(true); setLayers(false); setHand(false); setSimulationOpen(false); setGuidedOpen(false); setCompareOpen(false); setInfoOpen(true)
+        setSearchOpen(true); setLayers(false); setHand(false); setSimulationOpen(false); setGuidedOpen(false); setCompareOpen(false); setCosmosOpen(false); setInfoOpen(true)
         window.requestAnimationFrame(() => document.querySelector<HTMLInputElement>('.search-box input')?.focus())
       }
     }
@@ -1172,7 +1236,7 @@ export default function SolarSystemExplorer() {
     if (entering) {
       setPlaying(false)
       clock.current.playing = false
-      setSearchOpen(false); setLayers(false); setHand(false); setSimulationOpen(false); setGuidedOpen(false); setCompareOpen(false)
+      setSearchOpen(false); setLayers(false); setHand(false); setSimulationOpen(false); setGuidedOpen(false); setCompareOpen(false); setCosmosOpen(false)
       setInfoOpen(false); setSelectedMoon(null); setCloseUp(null); setFollowName(null)
     }
   }
@@ -1204,6 +1268,8 @@ export default function SolarSystemExplorer() {
   const selectedMoonFacts = selectedMoon ? moonKnowledge[selectedMoon.moon.name] : null
   const comparedA = catalogObjects.find((item) => item.name === compareA) ?? catalogObjects[0]
   const comparedB = catalogObjects.find((item) => item.name === compareB) ?? catalogObjects[1]
+  const visibleCosmosObjects = cosmosObjects.filter((item) => cosmosTab === 'nebula' ? item.group === 'Nebulosa' : item.group !== 'Nebulosa')
+  const selectedCosmosObject = visibleCosmosObjects.find((item) => item.name === cosmosSelection) ?? visibleCosmosObjects[0]
   return (
     <main className={`explorer ${closeUp ? 'is-closeup' : ''} ${teacherMode ? 'teacher-mode' : ''}`}>
       {!ready && <div className="loader-overlay" role="status" aria-live="polite"><div className="loader-box"><Orbit className="loader-spin" size={28} /><span>CARREGANDO TEXTURAS · {Math.round(progress)}%</span><div className="loader-track"><div className="loader-fill" style={{ width: `${progress}%` }} /></div></div></div>}
@@ -1211,7 +1277,7 @@ export default function SolarSystemExplorer() {
         <Scene selected={selected.name} showLabels={showLabels} followName={followName} closeUp={closeUp}
           onSelect={(p) => { setSelected(p); setSelectedMoon(null); setInfoOpen(true); setFollowName(null); setCloseUp(p.name) }}
           onMoonSelect={(moon, planet) => { setSelected(planet); setSelectedMoon({ moon, planet }); setInfoOpen(true); setFollowName(null); setCloseUp(planet.name) }}
-          showOrbits={showOrbits} belt={belt} clock={clock} onFollowEnd={() => setFollowName(null)} />
+          showOrbits={showOrbits} belt={belt} kuiperBelt={kuiperBelt} comets={comets} clock={clock} onFollowEnd={() => setFollowName(null)} />
       </div>
 
       <header className="topbar">
@@ -1239,6 +1305,8 @@ export default function SolarSystemExplorer() {
           <Presentation size={15} /> {teacherMode ? 'SAIR DO MODO PROFESSOR' : 'MODO PROFESSOR'}
         </button>
 
+        <button className="mobile-cosmos-trigger" aria-label="Abrir catálogo Cosmos" aria-pressed={cosmosOpen} onClick={() => { const opening = !cosmosOpen; setCosmosOpen(opening); setSearchOpen(false); setLayers(false); setHand(false); setSimulationOpen(false); setGuidedOpen(false); setCompareOpen(false); setInfoOpen(!opening) }}><Telescope size={17} /></button>
+
         <button
           className="icon-button fullscreen-button"
           aria-label="Alternar tela cheia"
@@ -1254,17 +1322,20 @@ export default function SolarSystemExplorer() {
         <button className={showOrbits ? 'selected' : ''} aria-pressed={showOrbits} onClick={() => setShowOrbits(!showOrbits)}><Orbit size={14} /> ÓRBITAS</button>
         <button className={showLabels ? 'selected' : ''} aria-pressed={showLabels} onClick={() => setShowLabels(!showLabels)}>{showLabels ? <Check size={14} /> : <X size={14} />} NOMES</button>
         <button className={belt ? 'selected' : ''} aria-pressed={belt} onClick={() => setBelt(!belt)}><span className="mini-dot" /> CINTURÃO</button>
+        <button className={kuiperBelt ? 'selected' : ''} aria-pressed={kuiperBelt} onClick={() => setKuiperBelt(!kuiperBelt)}><span className="mini-dot" /> KUIPER</button>
+        <button className={comets ? 'selected' : ''} aria-pressed={comets} onClick={() => setComets(!comets)}><Orbit size={14} /> COMETAS</button>
         <button className={infoOpen ? 'selected' : ''} aria-pressed={infoOpen} onClick={() => setInfoOpen(!infoOpen)}><BookOpen size={14} /> DADOS</button>
         <button className="teacher-exit" onClick={toggleTeacherMode}>ENCERRAR <X size={14} /></button>
       </section>}
 
       <aside className="left-rail">
-        <button className={`rail-button ${searchOpen ? 'active' : ''}`} aria-pressed={searchOpen} aria-label="Abrir busca" onClick={() => { setSearchOpen(!searchOpen); setLayers(false); setHand(false); setSimulationOpen(false); setGuidedOpen(false); setCompareOpen(false); setInfoOpen(true) }}><Search size={17} /><span>BUSCA</span></button>
-        <button className={`rail-button ${layers ? 'active' : ''}`} aria-pressed={layers} onClick={() => { setLayers(!layers); setSearchOpen(false); setHand(false); setSimulationOpen(false); setGuidedOpen(false); setCompareOpen(false); setInfoOpen(true) }}><Layers3 size={17} /><span>CAMADAS</span></button>
-        <button className={`rail-button ${simulationOpen ? 'active' : ''}`} aria-pressed={simulationOpen} onClick={() => { setSimulationOpen(!simulationOpen); setSearchOpen(false); setLayers(false); setHand(false); setGuidedOpen(false); setCompareOpen(false); setInfoOpen(true) }}><Orbit size={17} /><span>TEMPO</span></button>
-        <button className={`rail-button ${guidedOpen ? 'active' : ''}`} aria-pressed={guidedOpen} onClick={() => { setGuidedOpen(!guidedOpen); setSearchOpen(false); setLayers(false); setHand(false); setSimulationOpen(false); setCompareOpen(false); setInfoOpen(true) }}><Compass size={17} /><span>GUIA</span></button>
-        <button className={`rail-button ${compareOpen ? 'active' : ''}`} aria-pressed={compareOpen} aria-label="Comparar objetos" onClick={() => { const opening = !compareOpen; setCompareOpen(opening); setInfoOpen(!opening); setSearchOpen(false); setLayers(false); setHand(false); setSimulationOpen(false); setGuidedOpen(false) }}><GitCompareArrows size={17} /><span>COMPARAR</span></button>
-        <button className={`rail-button ${hand ? 'active' : ''}`} aria-pressed={hand} onClick={() => { setHand(!hand); setSearchOpen(false); setLayers(false); setSimulationOpen(false); setGuidedOpen(false); setCompareOpen(false); setInfoOpen(true) }}><Hand size={17} /><span>GESTOS</span></button>
+        <button className={`rail-button ${searchOpen ? 'active' : ''}`} aria-pressed={searchOpen} aria-label="Abrir busca" onClick={() => { setSearchOpen(!searchOpen); setLayers(false); setHand(false); setSimulationOpen(false); setGuidedOpen(false); setCompareOpen(false); setCosmosOpen(false); setInfoOpen(true) }}><Search size={17} /><span>BUSCA</span></button>
+        <button className={`rail-button ${layers ? 'active' : ''}`} aria-pressed={layers} onClick={() => { setLayers(!layers); setSearchOpen(false); setHand(false); setSimulationOpen(false); setGuidedOpen(false); setCompareOpen(false); setCosmosOpen(false); setInfoOpen(true) }}><Layers3 size={17} /><span>CAMADAS</span></button>
+        <button className={`rail-button ${simulationOpen ? 'active' : ''}`} aria-pressed={simulationOpen} onClick={() => { setSimulationOpen(!simulationOpen); setSearchOpen(false); setLayers(false); setHand(false); setGuidedOpen(false); setCompareOpen(false); setCosmosOpen(false); setInfoOpen(true) }}><Orbit size={17} /><span>TEMPO</span></button>
+        <button className={`rail-button ${guidedOpen ? 'active' : ''}`} aria-pressed={guidedOpen} onClick={() => { setGuidedOpen(!guidedOpen); setSearchOpen(false); setLayers(false); setHand(false); setSimulationOpen(false); setCompareOpen(false); setCosmosOpen(false); setInfoOpen(true) }}><Compass size={17} /><span>GUIA</span></button>
+        <button className={`rail-button ${cosmosOpen ? 'active' : ''}`} aria-pressed={cosmosOpen} onClick={() => { const opening = !cosmosOpen; setCosmosOpen(opening); setSearchOpen(false); setLayers(false); setHand(false); setSimulationOpen(false); setGuidedOpen(false); setCompareOpen(false); setInfoOpen(!opening) }}><Telescope size={17} /><span>COSMOS</span></button>
+        <button className={`rail-button ${compareOpen ? 'active' : ''}`} aria-pressed={compareOpen} aria-label="Comparar objetos" onClick={() => { const opening = !compareOpen; setCompareOpen(opening); setInfoOpen(!opening); setSearchOpen(false); setLayers(false); setHand(false); setSimulationOpen(false); setGuidedOpen(false); setCosmosOpen(false) }}><GitCompareArrows size={17} /><span>COMPARAR</span></button>
+        <button className={`rail-button ${hand ? 'active' : ''}`} aria-pressed={hand} onClick={() => { setHand(!hand); setSearchOpen(false); setLayers(false); setSimulationOpen(false); setGuidedOpen(false); setCompareOpen(false); setCosmosOpen(false); setInfoOpen(true) }}><Hand size={17} /><span>GESTOS</span></button>
         <div className="rail-bottom">
           <button
             className="rail-button"
@@ -1309,6 +1380,29 @@ export default function SolarSystemExplorer() {
           )}
         </section>}
       </aside>
+
+      {cosmosOpen && selectedCosmosObject && <section className="cosmos-panel" aria-label="Catálogo de nebulosas e objetos do espaço">
+        <div className="panel-header">
+          <div><span className="eyebrow">CATÁLOGO ASTRONÔMICO</span><h2>Além do Sistema Solar</h2></div>
+          <button className="close-small" aria-label="Fechar catálogo Cosmos" onClick={() => { setCosmosOpen(false); setInfoOpen(true) }}><X size={15} /></button>
+        </div>
+        <p className="cosmos-intro">Explore nebulosas e complete o mapa dos pequenos corpos do nosso Sistema Solar.</p>
+        <div className="classroom-tabs" role="tablist" aria-label="Categorias do catálogo">
+          <button role="tab" aria-selected={cosmosTab === 'nebula'} className={cosmosTab === 'nebula' ? 'selected' : ''} onClick={() => { setCosmosTab('nebula'); setCosmosSelection('Nebulosa de Órion') }}><SparklesIcon size={14} /> NEBULOSAS</button>
+          <button role="tab" aria-selected={cosmosTab === 'solar'} className={cosmosTab === 'solar' ? 'selected' : ''} onClick={() => { setCosmosTab('solar'); setCosmosSelection('Ceres') }}><Orbit size={14} /> SISTEMA SOLAR</button>
+        </div>
+        <div className={`cosmos-art cosmos-art-${selectedCosmosObject.style}`} role="img" aria-label={`Ilustração didática de ${selectedCosmosObject.name}`}>
+          <span className="cosmos-starfield" />
+          <span className="cosmos-cloud cloud-one" /><span className="cosmos-cloud cloud-two" /><span className="cosmos-cloud cloud-three" />
+          <span className="cosmos-core" />
+          <small>ILUSTRAÇÃO ESQUEMÁTICA · NÃO É UMA FOTOGRAFIA</small>
+        </div>
+        <div className="cosmos-detail"><span className="guide-kicker">{selectedCosmosObject.group.toUpperCase()} · {selectedCosmosObject.summary.toUpperCase()}</span><h3>{selectedCosmosObject.name}</h3><p>{selectedCosmosObject.detail}</p><strong>{selectedCosmosObject.fact}</strong><a className="fact-source" href={selectedCosmosObject.source} target="_blank" rel="noreferrer">Fonte e mais informações: {selectedCosmosObject.sourceLabel} <ExternalLink size={11} /></a></div>
+        <div className="cosmos-list" aria-label={cosmosTab === 'nebula' ? 'Nebulosas para explorar' : 'Objetos do Sistema Solar para explorar'}>
+          {visibleCosmosObjects.map((item) => <button key={item.name} className={item.name === selectedCosmosObject.name ? 'selected' : ''} onClick={() => setCosmosSelection(item.name)}><span className={`cosmos-list-dot dot-${item.style}`} /><span>{item.name}<small>{item.summary}</small></span><ChevronRight size={14} /></button>)}
+        </div>
+        <p className="cosmos-caveat">Nebulosas são nuvens interestelares, muito além do Sistema Solar. As artes são representações didáticas; consulte as fontes para imagens científicas reais.</p>
+      </section>}
 
       {infoOpen && <section className="info-panel">
         <div className="panel-header">
@@ -1476,6 +1570,8 @@ export default function SolarSystemExplorer() {
             <span className="mini-dot" />
             ASTEROIDES
           </button>
+          <button className={kuiperBelt ? 'selected' : ''} aria-pressed={kuiperBelt} onClick={() => setKuiperBelt(!kuiperBelt)}><Orbit size={14} /> KUIPER</button>
+          <button className={comets ? 'selected' : ''} aria-pressed={comets} onClick={() => setComets(!comets)}><SparklesIcon size={14} /> COMETAS</button>
         </div>
       </section>}
 
@@ -1506,9 +1602,9 @@ export default function SolarSystemExplorer() {
             Cinturão principal
           </button>
 
-          <p className="layers-note">
-            Cometas e grade espacial não fazem parte desta cena.
-          </p>
+          <button className={`layer-toggle ${kuiperBelt ? 'selected' : ''}`} aria-pressed={kuiperBelt} onClick={() => setKuiperBelt(!kuiperBelt)}><span className="mini-dot" /> Cinturão de Kuiper <small>VISUALIZAÇÃO ESQUEMÁTICA</small></button>
+          <button className={`layer-toggle ${comets ? 'selected' : ''}`} aria-pressed={comets} onClick={() => setComets(!comets)}><span className="mini-dot" /> Cometa demonstrativo <small>ÓRBITA ILUSTRATIVA</small></button>
+          <p className="layers-note">Nebulosas estão fora do Sistema Solar e podem ser exploradas em Cosmos. A Nuvem de Oort é conceitual; não aparece na cena 3D.</p>
           <details className="scale-explainer">
             <summary><Ruler size={14} /> Como ler as escalas</summary>
             <p>Os tamanhos dos corpos e as distâncias entre órbitas são representativos e não seguem uma escala única. As posições e velocidades da animação são simplificadas para facilitar a visualização. Os valores físicos ficam identificados nos painéis de dados.</p>
