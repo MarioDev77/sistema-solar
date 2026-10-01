@@ -1014,17 +1014,68 @@ const nebulaPlacements: Record<string, { position: [number, number, number]; sca
   'Nebulosa da Águia': { position: [7, -2.8, 4], scale: [8.5, 4.1, 1] },
 }
 
-function DeepSpaceNebula({ object, selected, register, onSelect }: { object: CosmosObject; selected: boolean; register: (name: string, node: THREE.Object3D | null) => void; onSelect: (object: CosmosObject) => void }) {
+function DeepSpaceNebula({ object, selected, register, onSelect, quality }: { object: CosmosObject; selected: boolean; register: (name: string, node: THREE.Object3D | null) => void; onSelect: (object: CosmosObject) => void; quality: RenderQuality }) {
   const texture = useTexture(nebulaTextures[object.name as keyof typeof nebulaTextures])
   const gl = useThree((state) => state.gl)
   const placement = nebulaPlacements[object.name]
+  const geometry = useMemo(() => {
+    const cloud = new THREE.BufferGeometry()
+    if (typeof document === 'undefined' || !texture.image) return cloud
+    const canvas = document.createElement('canvas')
+    canvas.width = 480
+    canvas.height = 270
+    const context = canvas.getContext('2d', { willReadFrequently: true })
+    if (!context) return cloud
+    context.drawImage(texture.image, 0, 0, canvas.width, canvas.height)
+    const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data
+    const particleCount = quality === 'high' ? 22000 : 12500
+    const positions = new Float32Array(particleCount * 3)
+    const colors = new Float32Array(particleCount * 3)
+    let placed = 0
+    let attempts = 0
+    while (placed < particleCount && attempts < particleCount * 36) {
+      attempts++
+      const u = Math.random()
+      const v = Math.random()
+      const pixel = (Math.floor(v * canvas.height) * canvas.width + Math.floor(u * canvas.width)) * 4
+      const red = pixels[pixel] / 255
+      const green = pixels[pixel + 1] / 255
+      const blue = pixels[pixel + 2] / 255
+      const brightness = Math.max(red, green, blue)
+      const chroma = brightness - Math.min(red, green, blue)
+      if (brightness < 0.16 || (brightness < 0.32 && chroma < 0.075)) continue
+      if (Math.random() > Math.min(0.9, Math.max(0.14, (brightness - 0.1) * 1.25))) continue
+
+      const depth = THREE.MathUtils.clamp((Math.random() + Math.random() + Math.random() - 1.5) * 1.15, -1.85, 1.85)
+      const jitterX = Math.sin(depth * 3.2 + v * 17) * 0.07
+      const jitterY = Math.cos(depth * 3.8 + u * 19) * 0.06
+      positions[placed * 3] = (u - 0.5) * placement.scale[0] + jitterX
+      positions[placed * 3 + 1] = (0.5 - v) * placement.scale[1] + jitterY
+      positions[placed * 3 + 2] = depth
+      const boost = 1.22 + brightness * 0.42
+      colors[placed * 3] = Math.min(1, red * boost)
+      colors[placed * 3 + 1] = Math.min(1, green * boost)
+      colors[placed * 3 + 2] = Math.min(1, blue * boost)
+      placed++
+    }
+    cloud.setAttribute('position', new THREE.BufferAttribute(positions.slice(0, placed * 3), 3))
+    cloud.setAttribute('color', new THREE.BufferAttribute(colors.slice(0, placed * 3), 3))
+    cloud.computeBoundingSphere()
+    return cloud
+  }, [texture, placement, quality])
   useEffect(() => { texture.colorSpace = THREE.SRGBColorSpace; texture.anisotropy = Math.min(8, gl.capabilities.getMaxAnisotropy()); texture.needsUpdate = true }, [texture, gl])
-  return <sprite ref={(node) => register(object.name, node)} position={placement.position} scale={placement.scale} renderOrder={selected ? 3 : 1} onClick={(event) => { event.stopPropagation(); onSelect(object) }}>
-    <spriteMaterial map={texture} color={selected ? '#ffffff' : '#becbd2'} transparent opacity={selected ? 1 : .88} depthWrite={false} />
-    <Html center distanceFactor={15} position={[0, -.62, 0]}>
+  useEffect(() => () => geometry.dispose(), [geometry])
+  return <group position={placement.position} onClick={(event) => { event.stopPropagation(); onSelect(object) }}>
+    <points ref={(node) => register(object.name, node)} geometry={geometry} renderOrder={selected ? 3 : 1}>
+      <pointsMaterial color="#ffffff" vertexColors size={quality === 'high' ? 0.037 : 0.045} sizeAttenuation transparent opacity={selected ? 0.82 : 0.68} depthWrite={false} />
+    </points>
+    <sprite position={[0, 0, -1.92]} scale={placement.scale} renderOrder={0}>
+      <spriteMaterial map={texture} transparent opacity={selected ? 0.12 : 0.075} depthWrite={false} />
+    </sprite>
+    <Html center distanceFactor={15} position={[0, -placement.scale[1] * 0.62, 0]}>
       <button className={`nebula-space-label ${selected ? 'active' : ''}`} onClick={(event) => { event.stopPropagation(); onSelect(object) }}>{object.name.toUpperCase()}<small>{object.distance}</small></button>
     </Html>
-  </sprite>
+  </group>
 }
 
 function Scene({
@@ -1107,7 +1158,7 @@ function Scene({
 
       <SimulationClock clock={clock} />
       {deepSpaceMode ? <>
-        {deepNebulas.map((object) => <Suspense key={object.name} fallback={null}><DeepSpaceNebula object={object} selected={nebulaFocus === object.name} register={(name, node) => { if (node) nebulaRefs.current[name] = node; else delete nebulaRefs.current[name] }} onSelect={onNebulaSelect} /></Suspense>)}
+        {deepNebulas.map((object) => <Suspense key={object.name} fallback={null}><DeepSpaceNebula object={object} selected={nebulaFocus === object.name} register={(name, node) => { if (node) nebulaRefs.current[name] = node; else delete nebulaRefs.current[name] }} onSelect={onNebulaSelect} quality={quality} /></Suspense>)}
       </> : <>
       <Sparkles count={quality === 'high' ? 220 : 110} scale={[40, 18, 40]} size={0.85} speed={0.08} color="#9fbdd8" />
       <Sun quality={quality} />
@@ -1289,7 +1340,7 @@ export default function SolarSystemExplorer() {
   useEffect(() => { if (progress >= 100 && !active) { const id = window.setTimeout(() => setReady(true), 350); return () => window.clearTimeout(id) } }, [progress, active])
   useEffect(() => { const id = window.setTimeout(() => setReady(true), 8000); return () => window.clearTimeout(id) }, [])
   // Esc sai da vista próxima / do seguimento
-  useEffect(() => { const h = (e: KeyboardEvent) => { if (e.key === 'Escape') { if (teacherMode) setTeacherMode(false); else if (cosmosOpen) { setCosmosOpen(false); setDeepSpaceMode(false); setNebulaFocus(null); setInfoOpen(true) } else if (searchOpen) setSearchOpen(false); else if (compareOpen) { setCompareOpen(false); setInfoOpen(true) } else if (closeUp) { setCloseUp(null); setSelectedMoon(null) } else if (followName) setFollowName(null) } }; window.addEventListener('keydown', h); return () => window.removeEventListener('keydown', h) }, [closeUp, compareOpen, cosmosOpen, followName, searchOpen, teacherMode])
+  useEffect(() => { const h = (e: KeyboardEvent) => { if (e.key === 'Escape') { if (teacherMode) setTeacherMode(false); else if (cosmosOpen) setCosmosOpen(false); else if (searchOpen) setSearchOpen(false); else if (compareOpen) { setCompareOpen(false); setInfoOpen(true) } else if (closeUp) { setCloseUp(null); setSelectedMoon(null) } else if (followName) setFollowName(null); else if (deepSpaceMode && nebulaFocus) setNebulaFocus(null); else if (deepSpaceMode) { setDeepSpaceMode(false); setInfoOpen(true) } } }; window.addEventListener('keydown', h); return () => window.removeEventListener('keydown', h) }, [closeUp, compareOpen, cosmosOpen, deepSpaceMode, followName, nebulaFocus, searchOpen, teacherMode])
   useEffect(() => {
     const handleSearchShortcut = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
@@ -1336,15 +1387,16 @@ export default function SolarSystemExplorer() {
   const toggleCosmos = () => {
     const opening = !cosmosOpen
     setCosmosOpen(opening)
-    setDeepSpaceMode(opening)
-    setNebulaFocus(null)
-    setCosmosTab('nebula')
-    if (opening && !nebulaTextures[cosmosSelection as keyof typeof nebulaTextures]) setCosmosSelection('Nebulosa de Órion')
-    setSearchOpen(false); setLayers(false); setHand(false); setSimulationOpen(false); setGuidedOpen(false); setCompareOpen(false)
-    setSelectedMoon(null); setCloseUp(null); setFollowName(null); setInfoOpen(!opening)
+    if (opening) {
+      setDeepSpaceMode(true)
+      setCosmosTab('nebula')
+      if (!nebulaTextures[cosmosSelection as keyof typeof nebulaTextures]) setCosmosSelection('Nebulosa de Órion')
+      setSearchOpen(false); setLayers(false); setHand(false); setSimulationOpen(false); setGuidedOpen(false); setCompareOpen(false)
+      setSelectedMoon(null); setCloseUp(null); setFollowName(null); setInfoOpen(false)
+    }
   }
   const selectNebula = (object: CosmosObject) => {
-    setCosmosOpen(true); setCosmosTab('nebula'); setCosmosSelection(object.name); setNebulaFocus(object.name); setDeepSpaceMode(true)
+    setCosmosOpen(false); setCosmosTab('nebula'); setCosmosSelection(object.name); setNebulaFocus(object.name); setDeepSpaceMode(true)
     setInfoOpen(false); setSearchOpen(false); setLayers(false); setHand(false); setSimulationOpen(false); setGuidedOpen(false); setCompareOpen(false)
   }
   const changeSelectedPlanet = (offset: number) => {
@@ -1487,7 +1539,7 @@ export default function SolarSystemExplorer() {
       {cosmosOpen && selectedCosmosObject && <section className="cosmos-panel" aria-label="Catálogo de nebulosas e objetos do espaço">
         <div className="panel-header">
           <div><span className="eyebrow">CATÁLOGO ASTRONÔMICO</span><h2>Além do Sistema Solar</h2></div>
-          <button className="close-small" aria-label="Fechar catálogo Cosmos e voltar ao Sistema Solar" onClick={() => { setCosmosOpen(false); setDeepSpaceMode(false); setNebulaFocus(null); setInfoOpen(true) }}><X size={15} /></button>
+          <button className="close-small" aria-label="Fechar catálogo Cosmos" onClick={() => setCosmosOpen(false)}><X size={15} /></button>
         </div>
         <p className="cosmos-intro">Explore nebulosas e complete o mapa dos pequenos corpos do nosso Sistema Solar.</p>
         <div className="classroom-tabs" role="tablist" aria-label="Categorias do catálogo">
@@ -1498,15 +1550,15 @@ export default function SolarSystemExplorer() {
           {selectedCosmosObject.group === 'Nebulosa' ? <><img src={nebulaTextures[selectedCosmosObject.name as keyof typeof nebulaTextures]} alt={`Imagem científica de ${selectedCosmosObject.name}`} /><small>IMAGEM {selectedCosmosObject.imageCredit}</small></> : <><span className="cosmos-starfield" /><span className="cosmos-cloud cloud-one" /><span className="cosmos-cloud cloud-two" /><span className="cosmos-cloud cloud-three" /><span className="cosmos-core" /><small>ILUSTRAÇÃO ESQUEMÁTICA · NÃO É UMA FOTOGRAFIA</small></>}
         </div>
         <div className="cosmos-detail"><span className="guide-kicker">{selectedCosmosObject.group.toUpperCase()} · {selectedCosmosObject.summary.toUpperCase()}</span><h3>{selectedCosmosObject.name}</h3><p>{selectedCosmosObject.detail}</p><strong>{selectedCosmosObject.fact}</strong><a className="fact-source" href={selectedCosmosObject.source} target="_blank" rel="noreferrer">Fonte e mais informações: {selectedCosmosObject.sourceLabel} <ExternalLink size={11} /></a>
-          {selectedCosmosObject.group === 'Nebulosa' && <div className="nebula-actions"><button className="travel-button" onClick={() => { setDeepSpaceMode(true); setNebulaFocus(selectedCosmosObject.name) }}><Crosshair size={14} /> {nebulaFocus === selectedCosmosObject.name ? 'VISUALIZANDO DE PERTO' : 'VIAJAR ATÉ A NEBULOSA'} <ChevronRight size={14} /></button><button className="travel-button secondary" onClick={() => setNebulaFocus(null)}><ZoomIn size={14} /> VISÃO GERAL DO ESPAÇO</button></div>}
+          {selectedCosmosObject.group === 'Nebulosa' && <div className="nebula-actions"><button className="travel-button" onClick={() => { setDeepSpaceMode(true); setNebulaFocus(selectedCosmosObject.name); setCosmosOpen(false) }}><Crosshair size={14} /> {nebulaFocus === selectedCosmosObject.name ? 'VISUALIZANDO DE PERTO' : 'VIAJAR ATÉ A NEBULOSA'} <ChevronRight size={14} /></button><button className="travel-button secondary" onClick={() => setNebulaFocus(null)}><ZoomIn size={14} /> VISÃO GERAL DO ESPAÇO</button></div>}
         </div>
         <div className="cosmos-list" aria-label={cosmosTab === 'nebula' ? 'Nebulosas para explorar' : 'Objetos do Sistema Solar para explorar'}>
           {visibleCosmosObjects.map((item) => <button key={item.name} className={item.name === selectedCosmosObject.name ? 'selected' : ''} onClick={() => { setCosmosSelection(item.name); if (item.group === 'Nebulosa') { setDeepSpaceMode(true); setNebulaFocus(null) } else { setDeepSpaceMode(false); setNebulaFocus(null) } }}><span className={`cosmos-list-dot dot-${item.style}`} /><span>{item.name}<small>{item.summary}</small></span><ChevronRight size={14} /></button>)}
         </div>
-        <p className="cosmos-caveat">As nebulosas aparecem como imagens científicas bidimensionais em um espaço 3D esquemático. As cores são processadas a partir de filtros de telescópios e podem não corresponder ao que os olhos veriam.</p>
+        <p className="cosmos-caveat">Nuvem 3D reconstruída por amostragem das imagens científicas: a profundidade é estimada para visualização, não medida. Cores de Hubble e Webb combinam filtros e podem diferir da visão humana.</p>
       </section>}
 
-      {deepSpaceMode && <section className="deep-space-bar"><div><Telescope size={16} /><strong>{nebulaFocus ? `APROXIMAÇÃO · ${nebulaFocus.toUpperCase()}` : 'UNIVERSO PROFUNDO'}</strong><small>POSIÇÕES ESQUEMÁTICAS · DISTÂNCIAS EM ANOS-LUZ</small></div><button onClick={() => setNebulaFocus(null)} disabled={!nebulaFocus}><ZoomIn size={14} /> VISÃO GERAL</button><button className="deep-space-exit" onClick={() => { setDeepSpaceMode(false); setNebulaFocus(null); setCosmosOpen(false); setInfoOpen(true) }}><ArrowLeft size={14} /> SISTEMA SOLAR</button></section>}
+      {deepSpaceMode && <section className="deep-space-bar"><div><Telescope size={16} /><strong>{nebulaFocus ? `APROXIMAÇÃO · ${nebulaFocus.toUpperCase()}` : 'UNIVERSO PROFUNDO'}</strong><small>POSIÇÕES ESQUEMÁTICAS · DISTÂNCIAS EM ANOS-LUZ</small></div><button onClick={() => setNebulaFocus(null)} disabled={!nebulaFocus}><ZoomIn size={14} /> VISÃO GERAL</button><button onClick={() => setCosmosOpen(true)}><SparklesIcon size={14} /> DETALHES</button><button className="deep-space-exit" onClick={() => { setDeepSpaceMode(false); setNebulaFocus(null); setCosmosOpen(false); setInfoOpen(true) }}><ArrowLeft size={14} /> SISTEMA SOLAR</button></section>}
 
       {infoOpen && <section className="info-panel">
         <div className="panel-header">
