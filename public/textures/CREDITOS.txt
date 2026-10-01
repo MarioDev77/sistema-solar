@@ -7,3 +7,23 @@ charon.jpg — NASA/JPL-Caltech, mapa de textura do simulador JPL, criado por Do
 https://maps.jpl.nasa.gov/tmaps/pluto.html
 
 As imagens foram mantidas nos caminhos já usados pelo projeto. Saturno e Netuno foram preservados porque as opções esféricas encontradas no catálogo JPL são mapas representativos/fictícios e têm resolução inferior às texturas existentes.
+
+Texturas do sistema de Saturno
+
+saturn.jpg — Textura equiretangular representativa do catálogo NASA/JPL Solar System Simulator; a página informa que o mapa é fictício e serve à visualização artística da atmosfera variável de Saturno:
+https://maps.jpl.nasa.gov/tmaps/saturn.html
+
+enceladus.jpg — Mosaico global colorido da Cassini, PIA18435:
+https://science.nasa.gov/photojournal/color-maps-of-enceladus-2014/
+
+dione.jpg — Mosaico global colorido da Cassini, PIA18434:
+https://science.nasa.gov/photojournal/color-maps-of-dione-2014/
+
+iapetus.jpg — Mosaico global colorido da Cassini, PIA18436:
+https://science.nasa.gov/photojournal/color-maps-of-iapetus-2014/
+
+rhea.jpg — Mosaico global colorido da Cassini, PIA18438:
+https://science.nasa.gov/photojournal/color-maps-of-rhea-2014/
+
+titan.jpg — Mapa global de Titã com dados da Cassini ISS, PIA19658; recortado para remover grade, coordenadas e moldura cartográfica:
+https://science.nasa.gov/photojournal/titan-global-map-june-2015/
