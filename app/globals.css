@@ -833,6 +833,8 @@ input:focus-visible {
 
 .layers-panel {
   top: calc(var(--topbar-h) + 1.7rem);
+  max-height: calc(100vh - var(--topbar-h) - 2.5rem);
+  overflow-y: auto;
 }
 
 .hand-panel {
@@ -879,6 +881,29 @@ input:focus-visible {
   font-size: 0.62rem;
   line-height: 1.5;
 }
+
+.texture-credits {
+  margin-top: 0.85rem;
+  padding-top: 0.7rem;
+  border-top: 1px solid rgba(140, 180, 195, 0.14);
+}
+
+.texture-credits summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  color: #9ab9c5;
+  font-size: 0.66rem;
+  cursor: pointer;
+  list-style: none;
+}
+
+.texture-credits summary::-webkit-details-marker { display: none; }
+.texture-credits summary:hover { color: var(--accent); }
+.texture-credit-links { display: grid; gap: 0.45rem; max-height: 9rem; margin-top: 0.7rem; overflow-y: auto; }
+.texture-credit-links a { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; color: #7895a4; font-size: 0.58rem; text-decoration: none; }
+.texture-credit-links a:hover { color: var(--accent); }
 
 .hand-preview {
   display: flex;

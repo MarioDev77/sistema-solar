@@ -18,6 +18,7 @@ interface PlanetProps {
    */
   roughness?: number;
   metalness?: number;
+  materialColor?: string;
 }
 
 /**
@@ -36,6 +37,7 @@ export function Planet({
   segments = 64,
   roughness = 0.84,
   metalness = 0,
+  materialColor = "#f8f4ec",
 }: PlanetProps) {
   const meshRef = useRef<THREE.Mesh>(null!);
   const texture = useTexture(textureUrl);
@@ -70,7 +72,7 @@ export function Planet({
       <sphereGeometry args={[size, segments, heightSegments]} />
       <meshStandardMaterial
         map={texture}
-        color="#f8f4ec"
+        color={materialColor}
         roughness={roughness}
         metalness={metalness}
         envMapIntensity={0.12}

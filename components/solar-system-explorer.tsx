@@ -5,7 +5,7 @@ import { OrbitControls, Stars, Html, Line, Sparkles, useTexture, useProgress } f
 import { Suspense, useCallback, useLayoutEffect, useMemo, useRef, useState, useEffect, type RefObject } from 'react'
 import * as THREE from 'three'
 import { Planet as TexturedPlanet, FlatPlanet } from './planet'
-import { Search, Orbit, Hand, Play, Pause, RotateCcw, Maximize2, Crosshair, ChevronLeft, ChevronRight, X, Layers3, Camera, MousePointer2, ZoomIn, ArrowLeft, Compass } from 'lucide-react'
+import { Search, Orbit, Hand, Play, Pause, RotateCcw, Maximize2, Crosshair, ChevronLeft, ChevronRight, X, Layers3, Camera, MousePointer2, ZoomIn, ArrowLeft, Compass, ExternalLink } from 'lucide-react'
 
 const textures: Record<string, string> = {
   mercury: '/textures/mercury.jpg',
@@ -26,6 +26,8 @@ const textures: Record<string, string> = {
   ganymede: '/textures/ganymede.jpg',
   callisto: '/textures/callisto.jpg',
   titan: '/textures/titan.jpg',
+  mimas: '/textures/mimas.jpg',
+  tethys: '/textures/tethys.jpg',
   enceladus: '/textures/enceladus.jpg',
   rhea: '/textures/rhea.jpg',
   iapetus: '/textures/iapetus.jpg',
@@ -93,7 +95,7 @@ const planets: PlanetData[] = [
   { name: 'Terra', key: 'earth', orbit: 6.2, size: .3, color: '#3c75b9', type: 'Planeta rochoso', moons: '1', distance: '1,00 AU', period: '365,25 dias', description: 'Nosso planeta azul, com oceanos e vida conhecida.', atmosphere: { color: '#4da3ff', opacity: .18 }, moonList: [{ name: 'Lua', key: 'moon', relSize: .27, dist: 2.4, speed: .3, color: '#b8b8b8' }] },
   { name: 'Marte', key: 'mars', orbit: 7.6, size: .23, color: '#a85635', type: 'Planeta rochoso', moons: '2', distance: '1,52 AU', period: '687 dias', description: 'O planeta vermelho, marcado por vulcões e vales.', atmosphere: { color: '#d88a5a', opacity: .1 }, moonList: [{ name: 'Fobos', key: 'phobos', relSize: .17, dist: 1.6, speed: .9, color: '#7a6f66' }, { name: 'Deimos', key: 'deimos', relSize: .12, dist: 2.2, speed: .6, color: '#8a7a6a' }] },
   { name: 'Júpiter', key: 'jupiter', orbit: 10.4, size: .78, color: '#d4a36e', type: 'Gigante gasoso', moons: '115', distance: '5,20 AU', period: '11,86 anos', description: 'O maior planeta do Sistema Solar.', atmosphere: { color: '#d4a36e', opacity: .08 }, moonList: [{ name: 'Io', key: 'io', relSize: .18, dist: 1.9, speed: .7, color: '#d9c04a' }, { name: 'Europa', key: 'europa', relSize: .16, dist: 2.3, speed: .55, color: '#d8cbb0' }, { name: 'Ganímedes', key: 'ganymede', relSize: .24, dist: 2.8, speed: .4, color: '#9a8a78' }, { name: 'Calisto', key: 'callisto', relSize: .21, dist: 3.4, speed: .3, color: '#6a5f52' }] },
-  { name: 'Saturno', key: 'saturn', orbit: 13.8, size: .68, color: '#c6a276', type: 'Gigante gasoso', moons: '293', distance: '9,54 AU', period: '29,45 anos', description: 'Gigante gasoso conhecido pelo seu magnífico sistema de anéis.', atmosphere: { color: '#e0c890', opacity: .08 }, moonList: [{ name: 'Encélado', key: 'enceladus', relSize: .1, dist: 1.9, speed: .8, color: '#e8f0f2' }, { name: 'Dione', key: 'dione', relSize: .12, dist: 2.2, speed: .65, color: '#b8b4ac' }, { name: 'Reia', key: 'rhea', relSize: .14, dist: 2.7, speed: .5, color: '#c4c0b8' }, { name: 'Titã', key: 'titan', relSize: .24, dist: 3.4, speed: .35, color: '#d08a3a', atmosphere: { color: '#e08b3a', opacity: .4, scale: 1.6 } }, { name: 'Jápeto', key: 'iapetus', relSize: .13, dist: 4.2, speed: .25, color: '#8a8278' }] },
+  { name: 'Saturno', key: 'saturn', orbit: 13.8, size: .68, color: '#c6a276', type: 'Gigante gasoso', moons: '293', distance: '9,54 AU', period: '29,45 anos', description: 'Gigante gasoso conhecido pelo seu magnífico sistema de anéis.', atmosphere: { color: '#e0c890', opacity: .08 }, moonList: [{ name: 'Mimas', key: 'mimas', relSize: .075, dist: 1.55, speed: .95, color: '#c7c4bd' }, { name: 'Encélado', key: 'enceladus', relSize: .1, dist: 1.9, speed: .8, color: '#e8f0f2' }, { name: 'Tétis', key: 'tethys', relSize: .115, dist: 2.2, speed: .68, color: '#c8c6c0' }, { name: 'Dione', key: 'dione', relSize: .12, dist: 2.55, speed: .58, color: '#b8b4ac' }, { name: 'Reia', key: 'rhea', relSize: .14, dist: 2.95, speed: .48, color: '#c4c0b8' }, { name: 'Titã', key: 'titan', relSize: .24, dist: 3.55, speed: .35, color: '#d08a3a', atmosphere: { color: '#e08b3a', opacity: .4, scale: 1.6 } }, { name: 'Jápeto', key: 'iapetus', relSize: .13, dist: 4.25, speed: .25, color: '#8a8278' }] },
   { name: 'Urano', key: 'uranus', orbit: 17.1, size: .46, color: '#78b8c4', type: 'Gigante de gelo', moons: '29', distance: '19,19 AU', period: '84 anos', description: 'Um gigante de gelo que gira inclinado de lado.', atmosphere: { color: '#9fd8e0', opacity: .1 }, moonList: [{ name: 'Miranda', key: 'miranda', relSize: .09, dist: 1.7, speed: .8, color: '#a8a49e' }, { name: 'Ariel', key: 'ariel', relSize: .13, dist: 2.0, speed: .6, color: '#c8c4bc' }, { name: 'Umbriel', key: 'umbriel', relSize: .12, dist: 2.4, speed: .5, color: '#6a6866' }, { name: 'Titânia', key: 'titania', relSize: .17, dist: 2.9, speed: .4, color: '#a8988a' }, { name: 'Oberon', key: 'oberon', relSize: .16, dist: 3.3, speed: .32, color: '#988578' }] },
   { name: 'Netuno', key: 'neptune', orbit: 20.4, size: .45, color: '#3558ca', type: 'Gigante de gelo', moons: '16', distance: '30,06 AU', period: '164,8 anos', description: 'O mundo mais distante, com ventos supersônicos.', atmosphere: { color: '#5a7fe0', opacity: .12 }, moonList: [{ name: 'Tritão', key: 'triton', relSize: .25, dist: 2.3, speed: .45, color: '#d8c4bc', retro: true }] },
   { name: 'Plutão', key: 'pluto', orbit: 23.5, size: .14, color: '#c8b8a8', type: 'Planeta anão', moons: '5', distance: '39,48 AU', period: '248 anos', description: 'O mais famoso planeta anão, com o coração de gelo Sputnik Planitia.', moonList: [{ name: 'Caronte', key: 'charon', relSize: .55, dist: 1.9, speed: .5, color: '#8a8a8c' }] },
@@ -262,6 +264,7 @@ function SaturnRings({ size }: { size: number }) {
       <mesh
         geometry={geometry}
         rotation-x={Math.PI / 2}
+        castShadow
         receiveShadow
         renderOrder={2}
       >
@@ -404,6 +407,7 @@ function MoonBody({
         <TexturedPlanet
           textureUrl={textures[moon.key]}
           size={size}
+          materialColor={moon.key === 'titan' ? '#d3914f' : '#f8f4ec'}
           rotationSpeed={0.1}
           segments={Math.min(40, detail)}
           roughness={0.9}
@@ -662,11 +666,12 @@ function Planet({
             <TexturedPlanet
               textureUrl={textures[data.key]}
               size={data.size}
+              materialColor={data.key === 'saturn' ? '#e6cfaa' : '#f8f4ec'}
               rotationSpeed={data.orbit < 8 ? 0.25 : 0.5}
               segments={detail}
               roughness={
                 data.type === 'Gigante gasoso'
-                  ? 0.76
+                  ? 0.84
                   : data.type === 'Gigante de gelo'
                     ? 0.8
                     : 0.88
@@ -860,8 +865,8 @@ function Scene({
       <color attach="background" args={['#02050b']} />
       <fog attach="fog" args={['#02050b', 28, 52]} />
 
-      <ambientLight intensity={0.08} />
-      <hemisphereLight args={['#89a9c4', '#05070d', 0.2]} />
+      <ambientLight intensity={0.1} />
+      <hemisphereLight args={['#9ab5cc', '#05070d', 0.24]} />
 
       <Stars
         radius={90}
@@ -1085,7 +1090,7 @@ export default function SolarSystemExplorer() {
         </section>}
       </aside>
 
-      {infoOpen && <section className="info-panel"><div className="panel-header"><div><span className="eyebrow">OBJETO SELECIONADO</span><h2>{selected.name}</h2></div><div className="planet-panel-actions"><span className="planet-index">0{planets.indexOf(selected) + 1} / 0{planets.length}</span><button className="planet-nav" aria-label="Planeta anterior" onClick={() => changeSelectedPlanet(-1)}><ChevronLeft size={16} /></button><button className="planet-nav" aria-label="Próximo planeta" onClick={() => changeSelectedPlanet(1)}><ChevronRight size={16} /></button><button className="close-small" aria-label="Fechar dados do planeta e voltar à visão geral" onClick={() => { setInfoOpen(false); setCloseUp(null); setFollowName(null) }}><X size={16} /></button></div></div><div className="planet-orb" style={textures[selected.key] ? { backgroundImage: `url(${textures[selected.key]})` } : { backgroundColor: selected.color }}><div className="orb-glow" /></div>
+      {infoOpen && <section className="info-panel"><div className="panel-header"><div><span className="eyebrow">OBJETO SELECIONADO</span><h2>{selected.name}</h2></div><div className="planet-panel-actions"><span className="planet-index">0{planets.indexOf(selected) + 1} / 0{planets.length}</span><button className="planet-nav" aria-label="Planeta anterior" onClick={() => changeSelectedPlanet(-1)}><ChevronLeft size={16} /></button><button className="planet-nav" aria-label="Próximo planeta" onClick={() => changeSelectedPlanet(1)}><ChevronRight size={16} /></button><button className="close-small" aria-label="Fechar dados do planeta e voltar à visão geral" onClick={() => { setInfoOpen(false); setCloseUp(null); setFollowName(null) }}><X size={16} /></button></div></div><div className="planet-orb" style={textures[selected.key] ? { backgroundImage: `url(${textures[selected.key]})`, ...(selected.key === 'titan' ? { backgroundColor: '#d3914f', backgroundBlendMode: 'multiply' as const } : {}) } : { backgroundColor: selected.color }}><div className="orb-glow" /></div>
         <div className="object-meta">
           <span className="tag">{selected.type}</span>
           <span className="meta-line">
@@ -1240,6 +1245,19 @@ export default function SolarSystemExplorer() {
           <p className="layers-note">
             Cometas e grade espacial não fazem parte desta cena.
           </p>
+          <details className="texture-credits">
+            <summary>Fontes das texturas <ExternalLink size={13} /></summary>
+            <div className="texture-credit-links">
+              <a href="https://maps.jpl.nasa.gov/tmaps/saturn.html" target="_blank" rel="noreferrer">Saturno · NASA/JPL <ExternalLink size={11} /></a>
+              <a href="https://science.nasa.gov/resource/color-map-of-mimas-2014/" target="_blank" rel="noreferrer">Mimas · Cassini PIA18437 <ExternalLink size={11} /></a>
+              <a href="https://science.nasa.gov/resource/color-maps-of-tethys-2014/" target="_blank" rel="noreferrer">Tétis · Cassini PIA18439 <ExternalLink size={11} /></a>
+              <a href="https://science.nasa.gov/photojournal/titan-global-map-june-2015/" target="_blank" rel="noreferrer">Titã · Cassini PIA19658 <ExternalLink size={11} /></a>
+              <a href="https://science.nasa.gov/photojournal/color-maps-of-enceladus-2014/" target="_blank" rel="noreferrer">Encélado · Cassini PIA18435 <ExternalLink size={11} /></a>
+              <a href="https://science.nasa.gov/photojournal/color-maps-of-dione-2014/" target="_blank" rel="noreferrer">Dione · Cassini PIA18434 <ExternalLink size={11} /></a>
+              <a href="https://science.nasa.gov/photojournal/color-maps-of-rhea-2014/" target="_blank" rel="noreferrer">Reia · Cassini PIA18438 <ExternalLink size={11} /></a>
+              <a href="https://science.nasa.gov/photojournal/color-maps-of-iapetus-2014/" target="_blank" rel="noreferrer">Jápeto · Cassini PIA18436 <ExternalLink size={11} /></a>
+            </div>
+          </details>
         </section>
       )}
 

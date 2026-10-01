@@ -27,3 +27,11 @@ https://science.nasa.gov/photojournal/color-maps-of-rhea-2014/
 
 titan.jpg — Mapa global de Titã com dados da Cassini ISS, PIA19658; recortado para remover grade, coordenadas e moldura cartográfica:
 https://science.nasa.gov/photojournal/titan-global-map-june-2015/
+
+mimas.jpg — Mapa global colorido da Cassini, PIA18437 (cores realçadas):
+https://science.nasa.gov/resource/color-map-of-mimas-2014/
+
+tethys.jpg — Mosaico global colorido da Cassini, PIA18439 (cores realçadas):
+https://science.nasa.gov/resource/color-maps-of-tethys-2014/
+
+As cores dos mapas de Mimas e Tétis são realçadas e incluem faixas além da visão humana, conforme a documentação da NASA. As imagens foram redimensionadas para 2048 × 1024 para uso como mapas equiretangulares na simulação.
