@@ -42,6 +42,13 @@ const textures: Record<string, string> = {
   deimos: '/textures/deimos.jpg',
 }
 
+const nebulaTextures = {
+  'Nebulosa de Órion': '/textures/nebula-orion.jpg',
+  'Nebulosa do Anel': '/textures/nebula-ring.jpg',
+  'Nebulosa do Caranguejo': '/textures/nebula-crab.jpg',
+  'Nebulosa da Águia': '/textures/nebula-eagle.jpg',
+} as const
+
 type TexKey = keyof typeof textures
 
 type RenderQuality = 'high' | 'balanced'
@@ -147,12 +154,12 @@ const catalogObjects: CatalogObject[] = planets.flatMap((planet) => [
   ...planet.moonList.map((moon) => ({ name: moon.name, kind: `Lua de ${planet.name}`, planet, moon })),
 ])
 
-type CosmosObject = { name: string; group: 'Nebulosa' | 'Corpo menor' | 'Região'; style: string; summary: string; detail: string; fact: string; source: string; sourceLabel: string }
+type CosmosObject = { name: string; group: 'Nebulosa' | 'Corpo menor' | 'Região' | 'Estrela'; style: string; summary: string; detail: string; fact: string; source: string; sourceLabel: string; imageCredit?: string; distance?: string }
 const cosmosObjects: CosmosObject[] = [
-  { name: 'Nebulosa de Órion', group: 'Nebulosa', style: 'orion', summary: 'Berçário de estrelas', detail: 'Uma nuvem de gás e poeira onde milhares de estrelas estão se formando. A radiação de estrelas jovens esculpe cavidades no material ao redor.', fact: 'Fica a cerca de 1.300 anos-luz da Terra.', source: 'https://science.nasa.gov/asset/hubble/orion-nebula-3/', sourceLabel: 'NASA · Hubble' },
-  { name: 'Nebulosa do Anel', group: 'Nebulosa', style: 'ring', summary: 'Restos de uma estrela como o Sol', detail: 'Uma nebulosa planetária: camadas externas ejetadas por uma estrela em fim de vida. O nome “planetária” é histórico; ela não é um planeta.', fact: 'Também chamada M57; fica a cerca de 2.500 anos-luz.', source: 'https://science.nasa.gov/asset/webb/ring-nebula-nircam-image/', sourceLabel: 'NASA · Webb' },
-  { name: 'Nebulosa do Caranguejo', group: 'Nebulosa', style: 'crab', summary: 'Remanescente de supernova', detail: 'Uma nuvem em expansão formada por uma explosão estelar. No centro, uma estrela de nêutrons remanescente alimenta a emissão da nebulosa.', fact: 'O evento que a originou foi observado por astrônomos em 1054.', source: 'https://science.nasa.gov/mission/hubble/science/explore-the-night-sky/hubble-messier-catalog/messier-1/', sourceLabel: 'NASA · Hubble' },
-  { name: 'Nebulosa da Águia', group: 'Nebulosa', style: 'eagle', summary: 'Pilares de gás e poeira', detail: 'Região de formação estelar famosa pelos Pilares da Criação. A imagem representa gás e poeira interestelares; não é um objeto do Sistema Solar.', fact: 'Os pilares são esculpidos pela radiação de estrelas jovens próximas.', source: 'https://science.nasa.gov/mission/hubble/science/explore-the-night-sky/hubble-messier-catalog/messier-16/', sourceLabel: 'NASA · Hubble' },
+  { name: 'Nebulosa de Órion', group: 'Nebulosa', style: 'orion', summary: 'Berçário de estrelas', detail: 'Uma nuvem de gás e poeira onde milhares de estrelas estão se formando. A radiação de estrelas jovens esculpe cavidades no material ao redor.', fact: 'A cerca de 1.300 anos-luz da Terra.', source: 'https://science.nasa.gov/asset/hubble/orion-nebula-3/', sourceLabel: 'NASA · Hubble', imageCredit: 'NASA, ESA, Hubble Space Telescope Orion Treasury Project Team, Massimo Robberto (STScI/ESA)', distance: '1.300 anos-luz' },
+  { name: 'Nebulosa do Anel', group: 'Nebulosa', style: 'ring', summary: 'Restos de uma estrela como o Sol', detail: 'Uma nebulosa planetária: camadas externas ejetadas por uma estrela em fim de vida. O nome “planetária” é histórico; ela não é um planeta.', fact: 'Também chamada M57; a cerca de 2.500 anos-luz.', source: 'https://science.nasa.gov/asset/webb/ring-nebula-nircam-image/', sourceLabel: 'NASA · Webb', imageCredit: 'NASA, ESA, CSA, STScI', distance: '2.500 anos-luz' },
+  { name: 'Nebulosa do Caranguejo', group: 'Nebulosa', style: 'crab', summary: 'Remanescente de supernova', detail: 'Uma nuvem em expansão formada por uma explosão estelar. No centro, uma estrela de nêutrons remanescente alimenta a emissão da nebulosa.', fact: 'A supernova que a originou foi observada no ano 1054.', source: 'https://science.nasa.gov/asset/webb/crab-nebula-nircam-and-miri-image/', sourceLabel: 'NASA · Webb', imageCredit: 'NASA, ESA, CSA, STScI; processamento: Joseph DePasquale', distance: '6.500 anos-luz' },
+  { name: 'Nebulosa da Águia', group: 'Nebulosa', style: 'eagle', summary: 'Pilares de gás e poeira', detail: 'Região de formação estelar famosa pelos Pilares da Criação. A imagem mostra gás e poeira interestelares; não é um objeto do Sistema Solar.', fact: 'A cerca de 6.500 anos-luz; os pilares são esculpidos pela radiação de estrelas jovens.', source: 'https://science.nasa.gov/asset/hubble/eagle-nebula-pillars-of-creation/', sourceLabel: 'NASA · Hubble', imageCredit: 'NASA, ESA, and the Hubble Heritage Team (STScI/AURA)', distance: '6.500 anos-luz' },
   { name: 'Sol', group: 'Estrela', style: 'sun', summary: 'Estrela central do Sistema Solar', detail: 'O Sol é a estrela que fornece luz e energia ao Sistema Solar. Sua gravidade mantém planetas, planetas anões, cometas e outros corpos em órbita.', fact: 'Estudar atividade solar e vento solar é uma próxima expansão útil para as aulas.', source: 'https://science.nasa.gov/sun/', sourceLabel: 'NASA · Sol' },
   { name: 'Plutão', group: 'Corpo menor', style: 'pluto', summary: 'Planeta anão do cinturão de Kuiper', detail: 'Mundo gelado com cinco luas conhecidas, explorado de perto pela missão New Horizons. Sua classificação como planeta anão ajuda a discutir como a ciência organiza categorias.', fact: 'Sua lua Caronte é grande em relação ao próprio Plutão.', source: 'https://science.nasa.gov/dwarf-planets/pluto/', sourceLabel: 'NASA · Plutão' },
   { name: 'Ceres', group: 'Corpo menor', style: 'ceres', summary: 'Planeta anão do cinturão de asteroides', detail: 'O maior objeto do cinturão principal entre Marte e Júpiter. Ceres é classificado como planeta anão e foi visitado pela missão Dawn.', fact: 'Sua posição liga o estudo dos planetas anões ao cinturão de asteroides.', source: 'https://science.nasa.gov/dwarf-planets/ceres/', sourceLabel: 'NASA · Ceres' },
@@ -214,6 +221,7 @@ const lessons: LessonPlan[] = [
 // Evita o "pulo" de FlatPlanet -> TexturedPlanet e alimenta a tela de carregamento (useProgress).
 if (typeof window !== 'undefined') {
   Object.values(textures).forEach((url) => useTexture.preload(url))
+  Object.values(nebulaTextures).forEach((url) => useTexture.preload(url))
   useTexture.preload('/textures/saturn-ring.png')
 }
 
@@ -548,7 +556,7 @@ const HOME_TARGET = new THREE.Vector3(0, 0, 0)
  *    planeta a cada frame: o offset relativo não muda, então não há atraso nem oscilação, e o
  *    usuário pode orbitar/dar zoom livremente ao redor do planeta.
  */
-function CameraRig({ followName, closeUp, planetRefs, controlsRef, onFollowEnd }: { followName: string | null; closeUp: string | null; planetRefs: RefObject<Record<string, THREE.Group>>; controlsRef: RefObject<any>; onFollowEnd: () => void }) {
+function CameraRig({ followName, closeUp, planetRefs, controlsRef, onFollowEnd, enabled = true }: { followName: string | null; closeUp: string | null; planetRefs: RefObject<Record<string, THREE.Group>>; controlsRef: RefObject<any>; onFollowEnd: () => void; enabled?: boolean }) {
   const camera = useThree((s) => s.camera)
   const st = useRef({ kind: null as 'closeUp' | 'follow' | null, name: null as string | null, hasLast: false, arrived: false, limited: false, returning: false, bound: null as Controls | null })
   const v = useMemo(() => ({ pos: new THREE.Vector3(), last: new THREE.Vector3(), delta: new THREE.Vector3(), dir: new THREE.Vector3(), want: new THREE.Vector3() }), [])
@@ -570,6 +578,7 @@ function CameraRig({ followName, closeUp, planetRefs, controlsRef, onFollowEnd }
   }, [])
 
   useFrame((_, rawDelta) => {
+    if (!enabled) return
     const controls = controlsRef.current as Controls | null
     if (!controls) return
     const s = st.current
@@ -640,6 +649,61 @@ function CameraRig({ followName, closeUp, planetRefs, controlsRef, onFollowEnd }
       if (controls.target.distanceTo(HOME_TARGET) < .02 && camera.position.distanceTo(HOME_POS) < .05) s.returning = false
     }
   }, -1.5)
+  return null
+}
+
+function DeepSpaceCameraRig({ enabled, focusName, nebulaRefs, controlsRef }: { enabled: boolean; focusName: string | null; nebulaRefs: RefObject<Record<string, THREE.Object3D>>; controlsRef: RefObject<any> }) {
+  const camera = useThree((state) => state.camera)
+  const target = useMemo(() => new THREE.Vector3(), [])
+  const desiredCamera = useMemo(() => new THREE.Vector3(), [])
+  const state = useRef({ key: '', arrived: false, bound: null as Controls | null, onStart: null as (() => void) | null })
+  useEffect(() => { state.current.key = `${enabled ? 'deep' : 'solar'}:${focusName ?? 'overview'}`; state.current.arrived = false }, [enabled, focusName])
+  useEffect(() => () => { const s = state.current; if (s.bound && s.onStart) s.bound.removeEventListener('start', s.onStart); s.bound = null; s.onStart = null }, [])
+  useFrame((_, rawDelta) => {
+    const controls = controlsRef.current as Controls | null
+    if (!controls) return
+    const s = state.current
+    if (s.bound !== controls) {
+      if (s.bound && s.onStart) s.bound.removeEventListener('start', s.onStart)
+      const onStart = () => { s.arrived = true }
+      controls.addEventListener('start', onStart)
+      s.bound = controls
+      s.onStart = onStart
+    }
+    if (!s.key) return
+    if (s.arrived) return
+    const isDeep = enabled
+    const nebula = focusName ? nebulaRefs.current?.[focusName] : null
+    if (isDeep && focusName && !nebula) return
+    if (isDeep) {
+      if (nebula) {
+        nebula.getWorldPosition(target)
+        const direction = camera.position.clone().sub(controls.target)
+        if (direction.lengthSq() < 0.001) direction.set(0, .25, 1)
+        direction.normalize()
+        desiredCamera.copy(target).addScaledVector(direction, 4.1)
+        controls.enablePan = false
+        controls.minDistance = 1.15
+        controls.maxDistance = 90
+      } else {
+        target.set(0, 0, 0)
+        desiredCamera.set(0, 17, 37)
+        controls.enablePan = true
+        controls.minDistance = MIN_DIST
+        controls.maxDistance = 90
+      }
+    } else {
+      target.copy(HOME_TARGET)
+      desiredCamera.copy(HOME_POS)
+      controls.enablePan = true
+      controls.minDistance = MIN_DIST
+      controls.maxDistance = MAX_DIST
+    }
+    const blend = 1 - Math.exp(-Math.min(rawDelta, .05) * 4.5)
+    controls.target.lerp(target, blend)
+    camera.position.lerp(desiredCamera, blend)
+    if (camera.position.distanceTo(desiredCamera) < .035 && controls.target.distanceTo(target) < .02) s.arrived = true
+  }, -1.65)
   return null
 }
 
@@ -943,6 +1007,26 @@ function Comet({ enabled, clock }: { enabled: boolean; clock: RefObject<SimClock
   return <group><Line points={points} color="#8bb8c8" transparent opacity={0.28} lineWidth={0.7} /><group ref={body}><mesh><sphereGeometry args={[0.12, 12, 12]} /><meshStandardMaterial color="#d9f3ed" emissive="#8bded5" emissiveIntensity={1.3} /></mesh><mesh position={[0.28, 0, 0]} rotation-z={-Math.PI / 2}><coneGeometry args={[0.11, 0.65, 12, 1, true]} /><meshBasicMaterial color="#92c9e8" transparent opacity={0.34} side={THREE.DoubleSide} depthWrite={false} /></mesh></group></group>
 }
 
+const nebulaPlacements: Record<string, { position: [number, number, number]; scale: [number, number, number] }> = {
+  'Nebulosa de Órion': { position: [-8, 2.4, -4], scale: [8.5, 4.1, 1] },
+  'Nebulosa do Anel': { position: [7.5, 3.5, -7], scale: [5, 5, 1] },
+  'Nebulosa do Caranguejo': { position: [-6.5, -3.2, 5], scale: [5.5, 4.9, 1] },
+  'Nebulosa da Águia': { position: [7, -2.8, 4], scale: [8.5, 4.1, 1] },
+}
+
+function DeepSpaceNebula({ object, selected, register, onSelect }: { object: CosmosObject; selected: boolean; register: (name: string, node: THREE.Object3D | null) => void; onSelect: (object: CosmosObject) => void }) {
+  const texture = useTexture(nebulaTextures[object.name as keyof typeof nebulaTextures])
+  const gl = useThree((state) => state.gl)
+  const placement = nebulaPlacements[object.name]
+  useEffect(() => { texture.colorSpace = THREE.SRGBColorSpace; texture.anisotropy = Math.min(8, gl.capabilities.getMaxAnisotropy()); texture.needsUpdate = true }, [texture, gl])
+  return <sprite ref={(node) => register(object.name, node)} position={placement.position} scale={placement.scale} renderOrder={selected ? 3 : 1} onClick={(event) => { event.stopPropagation(); onSelect(object) }}>
+    <spriteMaterial map={texture} color={selected ? '#ffffff' : '#becbd2'} transparent opacity={selected ? 1 : .88} depthWrite={false} />
+    <Html center distanceFactor={15} position={[0, -.62, 0]}>
+      <button className={`nebula-space-label ${selected ? 'active' : ''}`} onClick={(event) => { event.stopPropagation(); onSelect(object) }}>{object.name.toUpperCase()}<small>{object.distance}</small></button>
+    </Html>
+  </sprite>
+}
+
 function Scene({
   selected,
   showLabels,
@@ -954,6 +1038,9 @@ function Scene({
   belt,
   kuiperBelt,
   comets,
+  deepSpaceMode,
+  nebulaFocus,
+  onNebulaSelect,
   clock,
   onFollowEnd,
 }: {
@@ -967,11 +1054,16 @@ function Scene({
   belt: boolean
   kuiperBelt: boolean
   comets: boolean
+  deepSpaceMode: boolean
+  nebulaFocus: string | null
+  onNebulaSelect: (object: CosmosObject) => void
   clock: RefObject<SimClock>
   onFollowEnd: () => void
 }) {
   const controlsRef = useRef<any>(null)
   const planetRefs = useRef<Record<string, THREE.Group>>({})
+  const nebulaRefs = useRef<Record<string, THREE.Object3D>>({})
+  const deepNebulas = cosmosObjects.filter((object) => object.group === 'Nebulosa')
 
   const [quality, setQuality] = useState<RenderQuality>('balanced')
 
@@ -998,7 +1090,7 @@ function Scene({
       style={{ touchAction: 'none' }}
     >
       <color attach="background" args={['#02050b']} />
-      <fog attach="fog" args={['#02050b', 28, 52]} />
+      <fog attach="fog" args={['#02050b', deepSpaceMode ? 100 : 28, deepSpaceMode ? 180 : 52]} />
 
       <ambientLight intensity={0.1} />
       <hemisphereLight args={['#9ab5cc', '#05070d', 0.24]} />
@@ -1006,22 +1098,18 @@ function Scene({
       <Stars
         radius={90}
         depth={50}
-        count={quality === 'high' ? 2600 : 1500}
+        count={deepSpaceMode ? (quality === 'high' ? 5200 : 3200) : (quality === 'high' ? 2600 : 1500)}
         factor={1.15}
         saturation={0.16}
         fade
         speed={0.12}
       />
 
-      <Sparkles
-        count={quality === 'high' ? 220 : 110}
-        scale={[40, 18, 40]}
-        size={0.85}
-        speed={0.08}
-        color="#9fbdd8"
-      />
-
       <SimulationClock clock={clock} />
+      {deepSpaceMode ? <>
+        {deepNebulas.map((object) => <Suspense key={object.name} fallback={null}><DeepSpaceNebula object={object} selected={nebulaFocus === object.name} register={(name, node) => { if (node) nebulaRefs.current[name] = node; else delete nebulaRefs.current[name] }} onSelect={onNebulaSelect} /></Suspense>)}
+      </> : <>
+      <Sparkles count={quality === 'high' ? 220 : 110} scale={[40, 18, 40]} size={0.85} speed={0.08} color="#9fbdd8" />
       <Sun quality={quality} />
 
       {planets.map((planet) => (
@@ -1051,6 +1139,7 @@ function Scene({
       />
       <KuiperBelt enabled={kuiperBelt} clock={clock} count={quality === 'high' ? 1500 : 780} />
       <Comet enabled={comets} clock={clock} />
+      </>}
 
       {/* mouse: arrastar/scroll/pan · toque: 1 dedo gira · 2 dedos pinça zoom e pan */}
       <OrbitControls
@@ -1073,7 +1162,9 @@ function Scene({
         planetRefs={planetRefs}
         controlsRef={controlsRef}
         onFollowEnd={onFollowEnd}
+        enabled={!deepSpaceMode}
       />
+      <DeepSpaceCameraRig enabled={deepSpaceMode} focusName={nebulaFocus} nebulaRefs={nebulaRefs} controlsRef={controlsRef} />
     </Canvas>
   )
 }
@@ -1185,6 +1276,8 @@ export default function SolarSystemExplorer() {
   const [cosmosOpen, setCosmosOpen] = useState(false)
   const [cosmosTab, setCosmosTab] = useState<'nebula' | 'solar'>('nebula')
   const [cosmosSelection, setCosmosSelection] = useState('Nebulosa de Órion')
+  const [deepSpaceMode, setDeepSpaceMode] = useState(false)
+  const [nebulaFocus, setNebulaFocus] = useState<string | null>(null)
   const [followName, setFollowName] = useState<string | null>(null)
   const [closeUp, setCloseUp] = useState<string | null>(null)
   const clock = useRef<SimClock>({ t: SIM_T0, speed: 1000, playing: true })
@@ -1196,12 +1289,12 @@ export default function SolarSystemExplorer() {
   useEffect(() => { if (progress >= 100 && !active) { const id = window.setTimeout(() => setReady(true), 350); return () => window.clearTimeout(id) } }, [progress, active])
   useEffect(() => { const id = window.setTimeout(() => setReady(true), 8000); return () => window.clearTimeout(id) }, [])
   // Esc sai da vista próxima / do seguimento
-  useEffect(() => { const h = (e: KeyboardEvent) => { if (e.key === 'Escape') { if (teacherMode) setTeacherMode(false); else if (cosmosOpen) { setCosmosOpen(false); setInfoOpen(true) } else if (searchOpen) setSearchOpen(false); else if (compareOpen) { setCompareOpen(false); setInfoOpen(true) } else if (closeUp) { setCloseUp(null); setSelectedMoon(null) } else if (followName) setFollowName(null) } }; window.addEventListener('keydown', h); return () => window.removeEventListener('keydown', h) }, [closeUp, compareOpen, cosmosOpen, followName, searchOpen, teacherMode])
+  useEffect(() => { const h = (e: KeyboardEvent) => { if (e.key === 'Escape') { if (teacherMode) setTeacherMode(false); else if (cosmosOpen) { setCosmosOpen(false); setDeepSpaceMode(false); setNebulaFocus(null); setInfoOpen(true) } else if (searchOpen) setSearchOpen(false); else if (compareOpen) { setCompareOpen(false); setInfoOpen(true) } else if (closeUp) { setCloseUp(null); setSelectedMoon(null) } else if (followName) setFollowName(null) } }; window.addEventListener('keydown', h); return () => window.removeEventListener('keydown', h) }, [closeUp, compareOpen, cosmosOpen, followName, searchOpen, teacherMode])
   useEffect(() => {
     const handleSearchShortcut = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
         event.preventDefault()
-        setSearchOpen(true); setLayers(false); setHand(false); setSimulationOpen(false); setGuidedOpen(false); setCompareOpen(false); setCosmosOpen(false); setInfoOpen(true)
+        setSearchOpen(true); setLayers(false); setHand(false); setSimulationOpen(false); setGuidedOpen(false); setCompareOpen(false); setCosmosOpen(false); setDeepSpaceMode(false); setNebulaFocus(null); setInfoOpen(true)
         window.requestAnimationFrame(() => document.querySelector<HTMLInputElement>('.search-box input')?.focus())
       }
     }
@@ -1236,9 +1329,23 @@ export default function SolarSystemExplorer() {
     if (entering) {
       setPlaying(false)
       clock.current.playing = false
-      setSearchOpen(false); setLayers(false); setHand(false); setSimulationOpen(false); setGuidedOpen(false); setCompareOpen(false); setCosmosOpen(false)
+      setSearchOpen(false); setLayers(false); setHand(false); setSimulationOpen(false); setGuidedOpen(false); setCompareOpen(false); setCosmosOpen(false); setDeepSpaceMode(false); setNebulaFocus(null)
       setInfoOpen(false); setSelectedMoon(null); setCloseUp(null); setFollowName(null)
     }
+  }
+  const toggleCosmos = () => {
+    const opening = !cosmosOpen
+    setCosmosOpen(opening)
+    setDeepSpaceMode(opening)
+    setNebulaFocus(null)
+    setCosmosTab('nebula')
+    if (opening && !nebulaTextures[cosmosSelection as keyof typeof nebulaTextures]) setCosmosSelection('Nebulosa de Órion')
+    setSearchOpen(false); setLayers(false); setHand(false); setSimulationOpen(false); setGuidedOpen(false); setCompareOpen(false)
+    setSelectedMoon(null); setCloseUp(null); setFollowName(null); setInfoOpen(!opening)
+  }
+  const selectNebula = (object: CosmosObject) => {
+    setCosmosOpen(true); setCosmosTab('nebula'); setCosmosSelection(object.name); setNebulaFocus(object.name); setDeepSpaceMode(true)
+    setInfoOpen(false); setSearchOpen(false); setLayers(false); setHand(false); setSimulationOpen(false); setGuidedOpen(false); setCompareOpen(false)
   }
   const changeSelectedPlanet = (offset: number) => {
     const currentIndex = planets.findIndex((planet) => planet.name === selected.name)
@@ -1271,13 +1378,13 @@ export default function SolarSystemExplorer() {
   const visibleCosmosObjects = cosmosObjects.filter((item) => cosmosTab === 'nebula' ? item.group === 'Nebulosa' : item.group !== 'Nebulosa')
   const selectedCosmosObject = visibleCosmosObjects.find((item) => item.name === cosmosSelection) ?? visibleCosmosObjects[0]
   return (
-    <main className={`explorer ${closeUp ? 'is-closeup' : ''} ${teacherMode ? 'teacher-mode' : ''}`}>
+    <main className={`explorer ${closeUp ? 'is-closeup' : ''} ${teacherMode ? 'teacher-mode' : ''} ${deepSpaceMode ? 'deep-space-mode' : ''}`}>
       {!ready && <div className="loader-overlay" role="status" aria-live="polite"><div className="loader-box"><Orbit className="loader-spin" size={28} /><span>CARREGANDO TEXTURAS · {Math.round(progress)}%</span><div className="loader-track"><div className="loader-fill" style={{ width: `${progress}%` }} /></div></div></div>}
       <div className="scene">
         <Scene selected={selected.name} showLabels={showLabels} followName={followName} closeUp={closeUp}
           onSelect={(p) => { setSelected(p); setSelectedMoon(null); setInfoOpen(true); setFollowName(null); setCloseUp(p.name) }}
           onMoonSelect={(moon, planet) => { setSelected(planet); setSelectedMoon({ moon, planet }); setInfoOpen(true); setFollowName(null); setCloseUp(planet.name) }}
-          showOrbits={showOrbits} belt={belt} kuiperBelt={kuiperBelt} comets={comets} clock={clock} onFollowEnd={() => setFollowName(null)} />
+          showOrbits={showOrbits} belt={belt} kuiperBelt={kuiperBelt} comets={comets} deepSpaceMode={deepSpaceMode} nebulaFocus={nebulaFocus} onNebulaSelect={selectNebula} clock={clock} onFollowEnd={() => setFollowName(null)} />
       </div>
 
       <header className="topbar">
@@ -1294,18 +1401,14 @@ export default function SolarSystemExplorer() {
 
         <div className="top-status">
           <span className="status-dot" />
-          SISTEMA ONLINE
-          <span className="divider" />
-          SIMULAÇÃO VISUAL
-          <span className="divider" />
-          ESCALA REPRESENTATIVA
+          {deepSpaceMode ? <>ESPAÇO PROFUNDO <span className="divider" /> IMAGENS NASA · HUBBLE / WEBB</> : <>SISTEMA ONLINE <span className="divider" /> SIMULAÇÃO VISUAL <span className="divider" /> ESCALA REPRESENTATIVA</>}
         </div>
 
         <button className={`teacher-toggle ${teacherMode ? 'active' : ''}`} aria-pressed={teacherMode} onClick={toggleTeacherMode}>
           <Presentation size={15} /> {teacherMode ? 'SAIR DO MODO PROFESSOR' : 'MODO PROFESSOR'}
         </button>
 
-        <button className="mobile-cosmos-trigger" aria-label="Abrir catálogo Cosmos" aria-pressed={cosmosOpen} onClick={() => { const opening = !cosmosOpen; setCosmosOpen(opening); setSearchOpen(false); setLayers(false); setHand(false); setSimulationOpen(false); setGuidedOpen(false); setCompareOpen(false); setInfoOpen(!opening) }}><Telescope size={17} /></button>
+        <button className="mobile-cosmos-trigger" aria-label="Alternar espaço profundo" aria-pressed={deepSpaceMode} onClick={toggleCosmos}><Telescope size={17} /></button>
 
         <button
           className="icon-button fullscreen-button"
@@ -1329,13 +1432,13 @@ export default function SolarSystemExplorer() {
       </section>}
 
       <aside className="left-rail">
-        <button className={`rail-button ${searchOpen ? 'active' : ''}`} aria-pressed={searchOpen} aria-label="Abrir busca" onClick={() => { setSearchOpen(!searchOpen); setLayers(false); setHand(false); setSimulationOpen(false); setGuidedOpen(false); setCompareOpen(false); setCosmosOpen(false); setInfoOpen(true) }}><Search size={17} /><span>BUSCA</span></button>
-        <button className={`rail-button ${layers ? 'active' : ''}`} aria-pressed={layers} onClick={() => { setLayers(!layers); setSearchOpen(false); setHand(false); setSimulationOpen(false); setGuidedOpen(false); setCompareOpen(false); setCosmosOpen(false); setInfoOpen(true) }}><Layers3 size={17} /><span>CAMADAS</span></button>
-        <button className={`rail-button ${simulationOpen ? 'active' : ''}`} aria-pressed={simulationOpen} onClick={() => { setSimulationOpen(!simulationOpen); setSearchOpen(false); setLayers(false); setHand(false); setGuidedOpen(false); setCompareOpen(false); setCosmosOpen(false); setInfoOpen(true) }}><Orbit size={17} /><span>TEMPO</span></button>
-        <button className={`rail-button ${guidedOpen ? 'active' : ''}`} aria-pressed={guidedOpen} onClick={() => { setGuidedOpen(!guidedOpen); setSearchOpen(false); setLayers(false); setHand(false); setSimulationOpen(false); setCompareOpen(false); setCosmosOpen(false); setInfoOpen(true) }}><Compass size={17} /><span>GUIA</span></button>
-        <button className={`rail-button ${cosmosOpen ? 'active' : ''}`} aria-pressed={cosmosOpen} onClick={() => { const opening = !cosmosOpen; setCosmosOpen(opening); setSearchOpen(false); setLayers(false); setHand(false); setSimulationOpen(false); setGuidedOpen(false); setCompareOpen(false); setInfoOpen(!opening) }}><Telescope size={17} /><span>COSMOS</span></button>
-        <button className={`rail-button ${compareOpen ? 'active' : ''}`} aria-pressed={compareOpen} aria-label="Comparar objetos" onClick={() => { const opening = !compareOpen; setCompareOpen(opening); setInfoOpen(!opening); setSearchOpen(false); setLayers(false); setHand(false); setSimulationOpen(false); setGuidedOpen(false); setCosmosOpen(false) }}><GitCompareArrows size={17} /><span>COMPARAR</span></button>
-        <button className={`rail-button ${hand ? 'active' : ''}`} aria-pressed={hand} onClick={() => { setHand(!hand); setSearchOpen(false); setLayers(false); setSimulationOpen(false); setGuidedOpen(false); setCompareOpen(false); setCosmosOpen(false); setInfoOpen(true) }}><Hand size={17} /><span>GESTOS</span></button>
+        <button className={`rail-button ${searchOpen ? 'active' : ''}`} aria-pressed={searchOpen} aria-label="Abrir busca" onClick={() => { setSearchOpen(!searchOpen); setLayers(false); setHand(false); setSimulationOpen(false); setGuidedOpen(false); setCompareOpen(false); setCosmosOpen(false); setDeepSpaceMode(false); setNebulaFocus(null); setInfoOpen(true) }}><Search size={17} /><span>BUSCA</span></button>
+        <button className={`rail-button ${layers ? 'active' : ''}`} aria-pressed={layers} onClick={() => { setLayers(!layers); setSearchOpen(false); setHand(false); setSimulationOpen(false); setGuidedOpen(false); setCompareOpen(false); setCosmosOpen(false); setDeepSpaceMode(false); setNebulaFocus(null); setInfoOpen(true) }}><Layers3 size={17} /><span>CAMADAS</span></button>
+        <button className={`rail-button ${simulationOpen ? 'active' : ''}`} aria-pressed={simulationOpen} onClick={() => { setSimulationOpen(!simulationOpen); setSearchOpen(false); setLayers(false); setHand(false); setGuidedOpen(false); setCompareOpen(false); setCosmosOpen(false); setDeepSpaceMode(false); setNebulaFocus(null); setInfoOpen(true) }}><Orbit size={17} /><span>TEMPO</span></button>
+        <button className={`rail-button ${guidedOpen ? 'active' : ''}`} aria-pressed={guidedOpen} onClick={() => { setGuidedOpen(!guidedOpen); setSearchOpen(false); setLayers(false); setHand(false); setSimulationOpen(false); setCompareOpen(false); setCosmosOpen(false); setDeepSpaceMode(false); setNebulaFocus(null); setInfoOpen(true) }}><Compass size={17} /><span>GUIA</span></button>
+        <button className={`rail-button ${cosmosOpen ? 'active' : ''}`} aria-pressed={cosmosOpen} onClick={toggleCosmos}><Telescope size={17} /><span>COSMOS</span></button>
+        <button className={`rail-button ${compareOpen ? 'active' : ''}`} aria-pressed={compareOpen} aria-label="Comparar objetos" onClick={() => { const opening = !compareOpen; setCompareOpen(opening); setInfoOpen(!opening); setSearchOpen(false); setLayers(false); setHand(false); setSimulationOpen(false); setGuidedOpen(false); setCosmosOpen(false); setDeepSpaceMode(false); setNebulaFocus(null) }}><GitCompareArrows size={17} /><span>COMPARAR</span></button>
+        <button className={`rail-button ${hand ? 'active' : ''}`} aria-pressed={hand} onClick={() => { setHand(!hand); setSearchOpen(false); setLayers(false); setSimulationOpen(false); setGuidedOpen(false); setCompareOpen(false); setCosmosOpen(false); setDeepSpaceMode(false); setNebulaFocus(null); setInfoOpen(true) }}><Hand size={17} /><span>GESTOS</span></button>
         <div className="rail-bottom">
           <button
             className="rail-button"
@@ -1384,25 +1487,26 @@ export default function SolarSystemExplorer() {
       {cosmosOpen && selectedCosmosObject && <section className="cosmos-panel" aria-label="Catálogo de nebulosas e objetos do espaço">
         <div className="panel-header">
           <div><span className="eyebrow">CATÁLOGO ASTRONÔMICO</span><h2>Além do Sistema Solar</h2></div>
-          <button className="close-small" aria-label="Fechar catálogo Cosmos" onClick={() => { setCosmosOpen(false); setInfoOpen(true) }}><X size={15} /></button>
+          <button className="close-small" aria-label="Fechar catálogo Cosmos e voltar ao Sistema Solar" onClick={() => { setCosmosOpen(false); setDeepSpaceMode(false); setNebulaFocus(null); setInfoOpen(true) }}><X size={15} /></button>
         </div>
         <p className="cosmos-intro">Explore nebulosas e complete o mapa dos pequenos corpos do nosso Sistema Solar.</p>
         <div className="classroom-tabs" role="tablist" aria-label="Categorias do catálogo">
-          <button role="tab" aria-selected={cosmosTab === 'nebula'} className={cosmosTab === 'nebula' ? 'selected' : ''} onClick={() => { setCosmosTab('nebula'); setCosmosSelection('Nebulosa de Órion') }}><SparklesIcon size={14} /> NEBULOSAS</button>
-          <button role="tab" aria-selected={cosmosTab === 'solar'} className={cosmosTab === 'solar' ? 'selected' : ''} onClick={() => { setCosmosTab('solar'); setCosmosSelection('Ceres') }}><Orbit size={14} /> SISTEMA SOLAR</button>
+          <button role="tab" aria-selected={cosmosTab === 'nebula'} className={cosmosTab === 'nebula' ? 'selected' : ''} onClick={() => { setCosmosTab('nebula'); if (!nebulaTextures[cosmosSelection as keyof typeof nebulaTextures]) setCosmosSelection('Nebulosa de Órion'); setDeepSpaceMode(true); setNebulaFocus(null) }}><SparklesIcon size={14} /> NEBULOSAS</button>
+          <button role="tab" aria-selected={cosmosTab === 'solar'} className={cosmosTab === 'solar' ? 'selected' : ''} onClick={() => { setCosmosTab('solar'); setCosmosSelection('Ceres'); setDeepSpaceMode(false); setNebulaFocus(null) }}><Orbit size={14} /> SISTEMA SOLAR</button>
         </div>
         <div className={`cosmos-art cosmos-art-${selectedCosmosObject.style}`} role="img" aria-label={`Ilustração didática de ${selectedCosmosObject.name}`}>
-          <span className="cosmos-starfield" />
-          <span className="cosmos-cloud cloud-one" /><span className="cosmos-cloud cloud-two" /><span className="cosmos-cloud cloud-three" />
-          <span className="cosmos-core" />
-          <small>ILUSTRAÇÃO ESQUEMÁTICA · NÃO É UMA FOTOGRAFIA</small>
+          {selectedCosmosObject.group === 'Nebulosa' ? <><img src={nebulaTextures[selectedCosmosObject.name as keyof typeof nebulaTextures]} alt={`Imagem científica de ${selectedCosmosObject.name}`} /><small>IMAGEM {selectedCosmosObject.imageCredit}</small></> : <><span className="cosmos-starfield" /><span className="cosmos-cloud cloud-one" /><span className="cosmos-cloud cloud-two" /><span className="cosmos-cloud cloud-three" /><span className="cosmos-core" /><small>ILUSTRAÇÃO ESQUEMÁTICA · NÃO É UMA FOTOGRAFIA</small></>}
         </div>
-        <div className="cosmos-detail"><span className="guide-kicker">{selectedCosmosObject.group.toUpperCase()} · {selectedCosmosObject.summary.toUpperCase()}</span><h3>{selectedCosmosObject.name}</h3><p>{selectedCosmosObject.detail}</p><strong>{selectedCosmosObject.fact}</strong><a className="fact-source" href={selectedCosmosObject.source} target="_blank" rel="noreferrer">Fonte e mais informações: {selectedCosmosObject.sourceLabel} <ExternalLink size={11} /></a></div>
+        <div className="cosmos-detail"><span className="guide-kicker">{selectedCosmosObject.group.toUpperCase()} · {selectedCosmosObject.summary.toUpperCase()}</span><h3>{selectedCosmosObject.name}</h3><p>{selectedCosmosObject.detail}</p><strong>{selectedCosmosObject.fact}</strong><a className="fact-source" href={selectedCosmosObject.source} target="_blank" rel="noreferrer">Fonte e mais informações: {selectedCosmosObject.sourceLabel} <ExternalLink size={11} /></a>
+          {selectedCosmosObject.group === 'Nebulosa' && <div className="nebula-actions"><button className="travel-button" onClick={() => { setDeepSpaceMode(true); setNebulaFocus(selectedCosmosObject.name) }}><Crosshair size={14} /> {nebulaFocus === selectedCosmosObject.name ? 'VISUALIZANDO DE PERTO' : 'VIAJAR ATÉ A NEBULOSA'} <ChevronRight size={14} /></button><button className="travel-button secondary" onClick={() => setNebulaFocus(null)}><ZoomIn size={14} /> VISÃO GERAL DO ESPAÇO</button></div>}
+        </div>
         <div className="cosmos-list" aria-label={cosmosTab === 'nebula' ? 'Nebulosas para explorar' : 'Objetos do Sistema Solar para explorar'}>
-          {visibleCosmosObjects.map((item) => <button key={item.name} className={item.name === selectedCosmosObject.name ? 'selected' : ''} onClick={() => setCosmosSelection(item.name)}><span className={`cosmos-list-dot dot-${item.style}`} /><span>{item.name}<small>{item.summary}</small></span><ChevronRight size={14} /></button>)}
+          {visibleCosmosObjects.map((item) => <button key={item.name} className={item.name === selectedCosmosObject.name ? 'selected' : ''} onClick={() => { setCosmosSelection(item.name); if (item.group === 'Nebulosa') { setDeepSpaceMode(true); setNebulaFocus(null) } else { setDeepSpaceMode(false); setNebulaFocus(null) } }}><span className={`cosmos-list-dot dot-${item.style}`} /><span>{item.name}<small>{item.summary}</small></span><ChevronRight size={14} /></button>)}
         </div>
-        <p className="cosmos-caveat">Nebulosas são nuvens interestelares, muito além do Sistema Solar. As artes são representações didáticas; consulte as fontes para imagens científicas reais.</p>
+        <p className="cosmos-caveat">As nebulosas aparecem como imagens científicas bidimensionais em um espaço 3D esquemático. As cores são processadas a partir de filtros de telescópios e podem não corresponder ao que os olhos veriam.</p>
       </section>}
+
+      {deepSpaceMode && <section className="deep-space-bar"><div><Telescope size={16} /><strong>{nebulaFocus ? `APROXIMAÇÃO · ${nebulaFocus.toUpperCase()}` : 'UNIVERSO PROFUNDO'}</strong><small>POSIÇÕES ESQUEMÁTICAS · DISTÂNCIAS EM ANOS-LUZ</small></div><button onClick={() => setNebulaFocus(null)} disabled={!nebulaFocus}><ZoomIn size={14} /> VISÃO GERAL</button><button className="deep-space-exit" onClick={() => { setDeepSpaceMode(false); setNebulaFocus(null); setCosmosOpen(false); setInfoOpen(true) }}><ArrowLeft size={14} /> SISTEMA SOLAR</button></section>}
 
       {infoOpen && <section className="info-panel">
         <div className="panel-header">
