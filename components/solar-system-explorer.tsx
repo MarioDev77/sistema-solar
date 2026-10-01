@@ -5,7 +5,7 @@ import { OrbitControls, Stars, Html, Line, Sparkles, useTexture, useProgress } f
 import { Suspense, useCallback, useLayoutEffect, useMemo, useRef, useState, useEffect, type RefObject } from 'react'
 import * as THREE from 'three'
 import { Planet as TexturedPlanet, FlatPlanet } from './planet'
-import { Search, Orbit, Hand, Play, Pause, RotateCcw, Maximize2, Crosshair, ChevronLeft, ChevronRight, X, Layers3, Camera, MousePointer2, ZoomIn, ArrowLeft, Compass, ExternalLink } from 'lucide-react'
+import { Search, Orbit, Hand, Play, Pause, RotateCcw, Maximize2, Crosshair, ChevronLeft, ChevronRight, X, Layers3, Camera, MousePointer2, ZoomIn, ArrowLeft, Compass, ExternalLink, GitCompareArrows, Ruler } from 'lucide-react'
 
 const textures: Record<string, string> = {
   mercury: '/textures/mercury.jpg',
@@ -89,6 +89,10 @@ type PlanetData = {
   moonList: MoonData[];
 }
 
+type MoonSelection = { moon: MoonData; planet: PlanetData }
+type CatalogObject = { name: string; kind: string; planet: PlanetData; moon?: MoonData }
+type MoonKnowledge = { diameter: string; orbit: string; period: string; fact: string }
+
 const planets: PlanetData[] = [
   { name: 'Mercúrio', key: 'mercury', orbit: 3.5, size: .16, color: '#9e9e9e', type: 'Planeta rochoso', moons: '0', distance: '0,39 AU', period: '88 dias', description: 'O menor planeta e o mais próximo do Sol.', moonList: [] },
   { name: 'Vênus', key: 'venus', orbit: 4.8, size: .27, color: '#c8904d', type: 'Planeta rochoso', moons: '0', distance: '0,72 AU', period: '225 dias', description: 'Um mundo de nuvens densas e atmosfera extrema.', atmosphere: { color: '#e8c46a', opacity: .22 }, moonList: [] },
@@ -113,6 +117,35 @@ const planetFacts: Record<string, { diameter: string; gravity: string }> = {
   'Netuno': { diameter: '49.528 km', gravity: '11,0 m/s²' },
   'Plutão': { diameter: '2.376 km', gravity: '0,7 m/s²' },
 }
+
+const moonKnowledge: Record<string, MoonKnowledge> = {
+  'Lua': { diameter: '3.475 km', orbit: '384.400 km da Terra', period: '27,3 dias', fact: 'A Lua ajuda a estabilizar a inclinação do eixo terrestre e influencia as marés.' },
+  'Fobos': { diameter: '22 km', orbit: '9.376 km de Marte', period: '7,7 horas', fact: 'Fobos orbita tão perto de Marte que completa três voltas enquanto Marte gira uma vez.' },
+  'Deimos': { diameter: '12 km', orbit: '23.463 km de Marte', period: '30,3 horas', fact: 'Deimos é a menor e mais externa das duas luas de Marte.' },
+  'Io': { diameter: '3.643 km', orbit: '421.700 km de Júpiter', period: '1,77 dias', fact: 'Io é o corpo com maior atividade vulcânica conhecida do Sistema Solar.' },
+  'Europa': { diameter: '3.122 km', orbit: '671.100 km de Júpiter', period: '3,55 dias', fact: 'Europa tem uma crosta de gelo e fortes evidências de um oceano sob a superfície.' },
+  'Ganímedes': { diameter: '5.268 km', orbit: '1.070.400 km de Júpiter', period: '7,15 dias', fact: 'Ganímedes é a maior lua do Sistema Solar e possui campo magnético próprio.' },
+  'Calisto': { diameter: '4.821 km', orbit: '1.882.700 km de Júpiter', period: '16,69 dias', fact: 'Calisto tem uma superfície muito antiga, marcada por crateras de impacto.' },
+  'Mimas': { diameter: '396 km', orbit: '185.500 km de Saturno', period: '22,6 horas', fact: 'A enorme cratera Herschel dá a Mimas uma aparência parecida com a Estrela da Morte.' },
+  'Encélado': { diameter: '504 km', orbit: '237.900 km de Saturno', period: '1,37 dias', fact: 'Jatos de vapor d’água e partículas de gelo saem de fissuras próximas ao polo sul.' },
+  'Tétis': { diameter: '1.062 km', orbit: '294.600 km de Saturno', period: '1,89 dias', fact: 'Tétis abriga a grande cratera Odysseus e o longo cânion Ithaca Chasma.' },
+  'Dione': { diameter: '1.123 km', orbit: '377.400 km de Saturno', period: '2,74 dias', fact: 'Dione tem fraturas e escarpas brilhantes formadas por terreno gelado.' },
+  'Reia': { diameter: '1.527 km', orbit: '527.100 km de Saturno', period: '4,52 dias', fact: 'Reia é a segunda maior lua de Saturno e tem uma superfície muito craterada.' },
+  'Titã': { diameter: '5.150 km', orbit: '1.221.900 km de Saturno', period: '15,95 dias', fact: 'Titã tem atmosfera densa e lagos e mares de metano e etano líquidos.' },
+  'Jápeto': { diameter: '1.469 km', orbit: '3.560.800 km de Saturno', period: '79,3 dias', fact: 'Jápeto tem hemisférios com brilho muito diferente e uma crista que percorre o equador.' },
+  'Miranda': { diameter: '472 km', orbit: '129.900 km de Urano', period: '1,41 dias', fact: 'Miranda apresenta falésias e terrenos muito diferentes, como se fossem grandes mosaicos.' },
+  'Ariel': { diameter: '1.158 km', orbit: '190.900 km de Urano', period: '2,52 dias', fact: 'Ariel possui vales e cânions que indicam uma história geológica ativa.' },
+  'Umbriel': { diameter: '1.169 km', orbit: '266.000 km de Urano', period: '4,14 dias', fact: 'Umbriel é uma das luas mais escuras de Urano e tem uma superfície antiga e craterada.' },
+  'Titânia': { diameter: '1.578 km', orbit: '436.300 km de Urano', period: '8,71 dias', fact: 'Titânia é a maior lua de Urano e possui grandes cânions em sua superfície.' },
+  'Oberon': { diameter: '1.523 km', orbit: '583.500 km de Urano', period: '13,46 dias', fact: 'Oberon é a lua principal mais distante de Urano, com terreno antigo e craterado.' },
+  'Tritão': { diameter: '2.707 km', orbit: '354.800 km de Netuno', period: '5,88 dias · retrógrado', fact: 'Tritão orbita Netuno no sentido contrário à rotação do planeta e apresenta atividade de gêiseres.' },
+  'Caronte': { diameter: '1.212 km', orbit: '19.600 km de Plutão', period: '6,39 dias', fact: 'Caronte é tão grande em relação a Plutão que os dois orbitam um ponto comum no espaço.' },
+}
+
+const catalogObjects: CatalogObject[] = planets.flatMap((planet) => [
+  { name: planet.name, kind: planet.type, planet },
+  ...planet.moonList.map((moon) => ({ name: moon.name, kind: `Lua de ${planet.name}`, planet, moon })),
+])
 
 const guideStops = [
   { name: 'Mercúrio', fact: 'Mercúrio completa uma volta ao redor do Sol em cerca de 88 dias terrestres.' },
@@ -357,12 +390,14 @@ function Atmosphere({
 
 function MoonBody({
   moon,
+  onSelect,
   planetSize,
   clock,
   showLabel,
   detail,
 }: {
   moon: MoonData
+  onSelect: () => void
   planetSize: number
   clock: RefObject<SimClock>
   showLabel: boolean
@@ -394,7 +429,7 @@ function MoonBody({
   useFrame(place, -2)
 
   return (
-    <group ref={ref}>
+    <group ref={ref} onClick={(event) => { event.stopPropagation(); onSelect() }} onDoubleClick={(event) => { event.stopPropagation(); onSelect() }}>
       <Suspense
         fallback={
           <FlatPlanet
@@ -595,6 +630,7 @@ function Planet({
   observing,
   closeUpActive,
   onSelect,
+  onMoonSelect,
   clock,
   showOrbits,
   planetRefs,
@@ -605,6 +641,7 @@ function Planet({
   observing: boolean
   closeUpActive: boolean
   onSelect: () => void
+  onMoonSelect: (moon: MoonData, planet: PlanetData) => void
   clock: RefObject<SimClock>
   showOrbits: boolean
   planetRefs: RefObject<Record<string, THREE.Group>>
@@ -734,6 +771,7 @@ function Planet({
           <Suspense key={moon.name} fallback={null}>
             <MoonBody
               moon={moon}
+              onSelect={() => onMoonSelect(moon, data)}
               planetSize={data.size}
               clock={clock}
               showLabel={closeUpActive}
@@ -821,6 +859,7 @@ function Scene({
   followName,
   closeUp,
   onSelect,
+  onMoonSelect,
   showOrbits,
   belt,
   clock,
@@ -830,6 +869,7 @@ function Scene({
   followName: string | null
   closeUp: string | null
   onSelect: (planet: PlanetData) => void
+  onMoonSelect: (moon: MoonData, planet: PlanetData) => void
   showOrbits: boolean
   belt: boolean
   clock: RefObject<SimClock>
@@ -900,6 +940,7 @@ function Scene({
           }
           closeUpActive={closeUp === planet.name}
           onSelect={() => onSelect(planet)}
+          onMoonSelect={onMoonSelect}
           clock={clock}
           showOrbits={showOrbits}
           planetRefs={planetRefs}
@@ -940,7 +981,26 @@ function Scene({
 }
 
 export default function SolarSystemExplorer() {
-  const [selected, setSelected] = useState<PlanetData>(planets[5]); const [infoOpen, setInfoOpen] = useState(true); const [showOrbits, setShowOrbits] = useState(true); const [belt, setBelt] = useState(true); const [playing, setPlaying] = useState(true); const [speed, setSpeed] = useState(1000); const [query, setQuery] = useState(''); const [hand, setHand] = useState(false); const [cameraActive, setCameraActive] = useState(false); const [layers, setLayers] = useState(false); const [searchOpen, setSearchOpen] = useState(false); const [simulationOpen, setSimulationOpen] = useState(false); const [guidedOpen, setGuidedOpen] = useState(false); const [guideIndex, setGuideIndex] = useState(0); const [followName, setFollowName] = useState<string | null>(null); const [closeUp, setCloseUp] = useState<string | null>(null)
+  const [selected, setSelected] = useState<PlanetData>(planets[5])
+  const [selectedMoon, setSelectedMoon] = useState<MoonSelection | null>(null)
+  const [infoOpen, setInfoOpen] = useState(true)
+  const [showOrbits, setShowOrbits] = useState(true)
+  const [belt, setBelt] = useState(true)
+  const [playing, setPlaying] = useState(true)
+  const [speed, setSpeed] = useState(1000)
+  const [query, setQuery] = useState('')
+  const [hand, setHand] = useState(false)
+  const [cameraActive, setCameraActive] = useState(false)
+  const [layers, setLayers] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [simulationOpen, setSimulationOpen] = useState(false)
+  const [guidedOpen, setGuidedOpen] = useState(false)
+  const [compareOpen, setCompareOpen] = useState(false)
+  const [compareA, setCompareA] = useState('Terra')
+  const [compareB, setCompareB] = useState('Saturno')
+  const [guideIndex, setGuideIndex] = useState(0)
+  const [followName, setFollowName] = useState<string | null>(null)
+  const [closeUp, setCloseUp] = useState<string | null>(null)
   const clock = useRef<SimClock>({ t: SIM_T0, speed: 1000, playing: true })
   const streamRef = useRef<MediaStream | null>(null)
   const { progress, active } = useProgress(); const [ready, setReady] = useState(false)
@@ -950,12 +1010,12 @@ export default function SolarSystemExplorer() {
   useEffect(() => { if (progress >= 100 && !active) { const id = window.setTimeout(() => setReady(true), 350); return () => window.clearTimeout(id) } }, [progress, active])
   useEffect(() => { const id = window.setTimeout(() => setReady(true), 8000); return () => window.clearTimeout(id) }, [])
   // Esc sai da vista próxima / do seguimento
-  useEffect(() => { const h = (e: KeyboardEvent) => { if (e.key === 'Escape') { if (searchOpen) setSearchOpen(false); else if (closeUp) setCloseUp(null); else if (followName) setFollowName(null) } }; window.addEventListener('keydown', h); return () => window.removeEventListener('keydown', h) }, [closeUp, followName, searchOpen])
+  useEffect(() => { const h = (e: KeyboardEvent) => { if (e.key === 'Escape') { if (searchOpen) setSearchOpen(false); else if (compareOpen) { setCompareOpen(false); setInfoOpen(true) } else if (closeUp) { setCloseUp(null); setSelectedMoon(null) } else if (followName) setFollowName(null) } }; window.addEventListener('keydown', h); return () => window.removeEventListener('keydown', h) }, [closeUp, compareOpen, followName, searchOpen])
   useEffect(() => {
     const handleSearchShortcut = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
         event.preventDefault()
-        setSearchOpen(true); setLayers(false); setHand(false); setSimulationOpen(false); setGuidedOpen(false)
+        setSearchOpen(true); setLayers(false); setHand(false); setSimulationOpen(false); setGuidedOpen(false); setCompareOpen(false); setInfoOpen(true)
         window.requestAnimationFrame(() => document.querySelector<HTMLInputElement>('.search-box input')?.focus())
       }
     }
@@ -964,19 +1024,25 @@ export default function SolarSystemExplorer() {
   }, [])
   // libera a câmera ao sair da página
   useEffect(() => () => { streamRef.current?.getTracks().forEach(t => t.stop()) }, [])
-  const searchResults = planets.flatMap((planet) => [
-    { name: planet.name, kind: planet.type, planet },
-    ...planet.moonList.map((moon) => ({ name: moon.name, kind: `Lua de ${planet.name}`, planet })),
-  ]).filter((item) => {
+  const searchResults = catalogObjects.filter((item) => {
     const normalize = (value: string) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('pt-BR')
     return normalize(item.name).includes(normalize(query.trim()))
   })
+  const selectObject = (item: CatalogObject) => {
+    setSelected(item.planet)
+    setSelectedMoon(item.moon ? { moon: item.moon, planet: item.planet } : null)
+    setInfoOpen(true)
+    setCompareOpen(false)
+    setFollowName(null)
+    setCloseUp(item.moon ? item.planet.name : null)
+  }
   const guideStop = guideStops[guideIndex]
   const guidePlanet = planets.find((planet) => planet.name === guideStop.name) ?? planets[0]
   const changeSelectedPlanet = (offset: number) => {
     const currentIndex = planets.findIndex((planet) => planet.name === selected.name)
     const nextIndex = (currentIndex + offset + planets.length) % planets.length
     setSelected(planets[nextIndex])
+    setSelectedMoon(null)
     setInfoOpen(true)
     setFollowName(null)
     setCloseUp(null)
@@ -997,12 +1063,16 @@ export default function SolarSystemExplorer() {
     }
   }
   const closeUpPlanet = planets.find(p => p.name === closeUp)
+  const selectedMoonFacts = selectedMoon ? moonKnowledge[selectedMoon.moon.name] : null
+  const comparedA = catalogObjects.find((item) => item.name === compareA) ?? catalogObjects[0]
+  const comparedB = catalogObjects.find((item) => item.name === compareB) ?? catalogObjects[1]
   return (
     <main className={`explorer ${closeUp ? 'is-closeup' : ''}`}>
       {!ready && <div className="loader-overlay" role="status" aria-live="polite"><div className="loader-box"><Orbit className="loader-spin" size={28} /><span>CARREGANDO TEXTURAS · {Math.round(progress)}%</span><div className="loader-track"><div className="loader-fill" style={{ width: `${progress}%` }} /></div></div></div>}
       <div className="scene">
         <Scene selected={selected.name} followName={followName} closeUp={closeUp}
-          onSelect={(p) => { setSelected(p); setInfoOpen(true); setFollowName(null); setCloseUp(p.name) }}
+          onSelect={(p) => { setSelected(p); setSelectedMoon(null); setInfoOpen(true); setFollowName(null); setCloseUp(p.name) }}
+          onMoonSelect={(moon, planet) => { setSelected(planet); setSelectedMoon({ moon, planet }); setInfoOpen(true); setFollowName(null); setCloseUp(planet.name) }}
           showOrbits={showOrbits} belt={belt} clock={clock} onFollowEnd={() => setFollowName(null)} />
       </div>
 
@@ -1037,11 +1107,12 @@ export default function SolarSystemExplorer() {
       </header>
 
       <aside className="left-rail">
-        <button className={`rail-button ${searchOpen ? 'active' : ''}`} aria-pressed={searchOpen} aria-label="Abrir busca" onClick={() => { setSearchOpen(!searchOpen); setLayers(false); setHand(false); setSimulationOpen(false); setGuidedOpen(false) }}><Search size={17} /><span>BUSCA</span></button>
-        <button className={`rail-button ${layers ? 'active' : ''}`} aria-pressed={layers} onClick={() => { setLayers(!layers); setSearchOpen(false); setHand(false); setSimulationOpen(false); setGuidedOpen(false) }}><Layers3 size={17} /><span>CAMADAS</span></button>
-        <button className={`rail-button ${simulationOpen ? 'active' : ''}`} aria-pressed={simulationOpen} onClick={() => { setSimulationOpen(!simulationOpen); setSearchOpen(false); setLayers(false); setHand(false); setGuidedOpen(false) }}><Orbit size={17} /><span>TEMPO</span></button>
-        <button className={`rail-button ${guidedOpen ? 'active' : ''}`} aria-pressed={guidedOpen} onClick={() => { setGuidedOpen(!guidedOpen); setSearchOpen(false); setLayers(false); setHand(false); setSimulationOpen(false) }}><Compass size={17} /><span>GUIA</span></button>
-        <button className={`rail-button ${hand ? 'active' : ''}`} aria-pressed={hand} onClick={() => { setHand(!hand); setSearchOpen(false); setLayers(false); setSimulationOpen(false); setGuidedOpen(false) }}><Hand size={17} /><span>GESTOS</span></button>
+        <button className={`rail-button ${searchOpen ? 'active' : ''}`} aria-pressed={searchOpen} aria-label="Abrir busca" onClick={() => { setSearchOpen(!searchOpen); setLayers(false); setHand(false); setSimulationOpen(false); setGuidedOpen(false); setCompareOpen(false); setInfoOpen(true) }}><Search size={17} /><span>BUSCA</span></button>
+        <button className={`rail-button ${layers ? 'active' : ''}`} aria-pressed={layers} onClick={() => { setLayers(!layers); setSearchOpen(false); setHand(false); setSimulationOpen(false); setGuidedOpen(false); setCompareOpen(false); setInfoOpen(true) }}><Layers3 size={17} /><span>CAMADAS</span></button>
+        <button className={`rail-button ${simulationOpen ? 'active' : ''}`} aria-pressed={simulationOpen} onClick={() => { setSimulationOpen(!simulationOpen); setSearchOpen(false); setLayers(false); setHand(false); setGuidedOpen(false); setCompareOpen(false); setInfoOpen(true) }}><Orbit size={17} /><span>TEMPO</span></button>
+        <button className={`rail-button ${guidedOpen ? 'active' : ''}`} aria-pressed={guidedOpen} onClick={() => { setGuidedOpen(!guidedOpen); setSearchOpen(false); setLayers(false); setHand(false); setSimulationOpen(false); setCompareOpen(false); setInfoOpen(true) }}><Compass size={17} /><span>GUIA</span></button>
+        <button className={`rail-button ${compareOpen ? 'active' : ''}`} aria-pressed={compareOpen} aria-label="Comparar objetos" onClick={() => { const opening = !compareOpen; setCompareOpen(opening); setInfoOpen(!opening); setSearchOpen(false); setLayers(false); setHand(false); setSimulationOpen(false); setGuidedOpen(false) }}><GitCompareArrows size={17} /><span>COMPARAR</span></button>
+        <button className={`rail-button ${hand ? 'active' : ''}`} aria-pressed={hand} onClick={() => { setHand(!hand); setSearchOpen(false); setLayers(false); setSimulationOpen(false); setGuidedOpen(false); setCompareOpen(false); setInfoOpen(true) }}><Hand size={17} /><span>GESTOS</span></button>
         <div className="rail-bottom">
           <button
             className="rail-button"
@@ -1072,10 +1143,7 @@ export default function SolarSystemExplorer() {
                 <button
                   key={`${item.kind}-${item.name}`}
                   onClick={() => {
-                    setSelected(item.planet)
-                    setInfoOpen(true)
-                    setFollowName(null)
-                    setCloseUp(null)
+                    selectObject(item)
                     setSearchOpen(false)
                     setQuery('')
                   }}
@@ -1090,18 +1158,62 @@ export default function SolarSystemExplorer() {
         </section>}
       </aside>
 
-      {infoOpen && <section className="info-panel"><div className="panel-header"><div><span className="eyebrow">OBJETO SELECIONADO</span><h2>{selected.name}</h2></div><div className="planet-panel-actions"><span className="planet-index">0{planets.indexOf(selected) + 1} / 0{planets.length}</span><button className="planet-nav" aria-label="Planeta anterior" onClick={() => changeSelectedPlanet(-1)}><ChevronLeft size={16} /></button><button className="planet-nav" aria-label="Próximo planeta" onClick={() => changeSelectedPlanet(1)}><ChevronRight size={16} /></button><button className="close-small" aria-label="Fechar dados do planeta e voltar à visão geral" onClick={() => { setInfoOpen(false); setCloseUp(null); setFollowName(null) }}><X size={16} /></button></div></div><div className="planet-orb" style={textures[selected.key] ? { backgroundImage: `url(${textures[selected.key]})`, ...(selected.key === 'titan' ? { backgroundColor: '#d3914f', backgroundBlendMode: 'multiply' as const } : {}) } : { backgroundColor: selected.color }}><div className="orb-glow" /></div>
-        <div className="object-meta">
-          <span className="tag">{selected.type}</span>
-          <span className="meta-line">
-            <span />
-            ESCALA VISUAL REPRESENTATIVA
-          </span>
+      {infoOpen && <section className="info-panel">
+        <div className="panel-header">
+          <div><span className="eyebrow">{selectedMoon ? `LUA DE ${selectedMoon.planet.name.toUpperCase()}` : 'OBJETO SELECIONADO'}</span><h2>{selectedMoon?.moon.name ?? selected.name}</h2></div>
+          <div className="planet-panel-actions">
+            <span className="planet-index">{selectedMoon ? 'LUA' : `0${planets.indexOf(selected) + 1} / 0${planets.length}`}</span>
+            {!selectedMoon && <><button className="planet-nav" aria-label="Planeta anterior" onClick={() => changeSelectedPlanet(-1)}><ChevronLeft size={16} /></button><button className="planet-nav" aria-label="Próximo planeta" onClick={() => changeSelectedPlanet(1)}><ChevronRight size={16} /></button></>}
+            <button className="close-small" aria-label="Fechar painel de dados" onClick={() => { setInfoOpen(false); setSelectedMoon(null); setCloseUp(null); setFollowName(null) }}><X size={16} /></button>
+          </div>
         </div>
-        <p>{selected.description}</p><div className="data-grid"><div><small>DIÂMETRO MÉDIO</small><strong>{planetFacts[selected.name]?.diameter ?? '—'}</strong></div><div><small>GRAVIDADE MÉDIA{selected.type.includes('Gigante') ? ' (1 BAR)' : ''}</small><strong>{planetFacts[selected.name]?.gravity ?? '—'}</strong></div><div><small>DISTÂNCIA MÉDIA DO SOL</small><strong>{selected.distance}</strong></div><div><small>PERÍODO ORBITAL</small><strong>{selected.period}</strong></div><div><small>SATÉLITES CONHECIDOS · 2026</small><strong>{selected.moons}</strong></div><div><small>CLASSIFICAÇÃO</small><strong>{selected.type}</strong></div></div>
-        <a className="fact-source" href="https://nssdc.gsfc.nasa.gov/planetary/factsheet/" target="_blank" rel="noreferrer">Dados: NASA Goddard · Fact Sheet</a>
-        <button className="travel-button" onClick={() => { setCloseUp(null); setFollowName(selected.name) }}><Crosshair size={15} /> VIAJAR ATÉ OBJETO <ChevronRight size={15} /></button>
-        <button className="travel-button secondary" onClick={() => { setFollowName(null); setCloseUp(selected.name) }}><ZoomIn size={15} /> OBSERVAR DE PERTO <ChevronRight size={15} /></button>
+        <div className="planet-orb" style={textures[selectedMoon?.moon.key ?? selected.key] ? { backgroundImage: `url(${textures[selectedMoon?.moon.key ?? selected.key]})`, ...((selectedMoon?.moon.key ?? selected.key) === 'titan' ? { backgroundColor: '#d3914f', backgroundBlendMode: 'multiply' as const } : {}) } : { backgroundColor: selectedMoon?.moon.color ?? selected.color }}><div className="orb-glow" /></div>
+        <div className="object-meta">
+          <span className="tag">{selectedMoon ? `Lua natural · ${selectedMoon.planet.name}` : selected.type}</span>
+          <span className="meta-line"><span /> ESCALA VISUAL REPRESENTATIVA</span>
+        </div>
+        {selectedMoon ? <>
+          <p>{selectedMoonFacts?.fact ?? `Satélite natural de ${selectedMoon.planet.name}.`}</p>
+          <div className="data-grid moon-data-grid">
+            <div><small>DIÂMETRO MÉDIO</small><strong>{selectedMoonFacts?.diameter ?? '—'}</strong></div>
+            <div><small>ÓRBITA AO REDOR DE {selectedMoon.planet.name.toUpperCase()}</small><strong>{selectedMoonFacts?.orbit ?? '—'}</strong></div>
+            <div><small>PERÍODO ORBITAL</small><strong>{selectedMoonFacts?.period ?? '—'}</strong></div>
+            <div><small>PLANETA HOSPEDEIRO</small><strong>{selectedMoon.planet.name}</strong></div>
+          </div>
+          <a className="fact-source" href="https://ssd.jpl.nasa.gov/sats/phys_par/" target="_blank" rel="noreferrer">Parâmetros físicos: NASA/JPL</a>
+          {selectedMoon.planet.name === 'Saturno' && <a className="fact-source" href="https://science.nasa.gov/saturn/moons/facts/" target="_blank" rel="noreferrer">Curiosidades: NASA · Luas de Saturno</a>}
+          <button className="travel-button" onClick={() => { setFollowName(null); setCloseUp(selectedMoon.planet.name) }}><Crosshair size={15} /> VER SISTEMA DE {selectedMoon.planet.name.toUpperCase()} <ChevronRight size={15} /></button>
+          <button className="travel-button secondary" onClick={() => setSelectedMoon(null)}><ArrowLeft size={15} /> VOLTAR A {selectedMoon.planet.name.toUpperCase()} <ChevronRight size={15} /></button>
+        </> : <>
+          <p>{selected.description}</p>
+          <div className="data-grid">
+            <div><small>DIÂMETRO MÉDIO</small><strong>{planetFacts[selected.name]?.diameter ?? '—'}</strong></div>
+            <div><small>GRAVIDADE MÉDIA{selected.type.includes('Gigante') ? ' (1 BAR)' : ''}</small><strong>{planetFacts[selected.name]?.gravity ?? '—'}</strong></div>
+            <div><small>DISTÂNCIA MÉDIA DO SOL</small><strong>{selected.distance}</strong></div>
+            <div><small>PERÍODO ORBITAL</small><strong>{selected.period}</strong></div>
+            <div><small>SATÉLITES CONHECIDOS · 2026</small><strong>{selected.moons}</strong></div>
+            <div><small>CLASSIFICAÇÃO</small><strong>{selected.type}</strong></div>
+          </div>
+          <a className="fact-source" href="https://nssdc.gsfc.nasa.gov/planetary/factsheet/" target="_blank" rel="noreferrer">Dados: NASA Goddard · Fact Sheet</a>
+          <button className="travel-button" onClick={() => { setCloseUp(null); setFollowName(selected.name) }}><Crosshair size={15} /> VIAJAR ATÉ OBJETO <ChevronRight size={15} /></button>
+          <button className="travel-button secondary" onClick={() => { setFollowName(null); setCloseUp(selected.name) }}><ZoomIn size={15} /> OBSERVAR DE PERTO <ChevronRight size={15} /></button>
+        </>}
+      </section>}
+
+      {compareOpen && <section className="compare-panel" aria-label="Comparar dois objetos">
+        <div className="panel-header"><div><span className="eyebrow">COMPARAÇÃO</span><h2>Comparar objetos</h2></div><button className="close-small" aria-label="Fechar comparação" onClick={() => { setCompareOpen(false); setInfoOpen(true) }}><X size={15} /></button></div>
+        <div className="compare-selectors">
+          <label>OBJETO A<select value={compareA} onChange={(event) => setCompareA(event.target.value)}>{catalogObjects.map((item) => <option key={`a-${item.name}`} value={item.name}>{item.name} · {item.kind}</option>)}</select></label>
+          <label>OBJETO B<select value={compareB} onChange={(event) => setCompareB(event.target.value)}>{catalogObjects.map((item) => <option key={`b-${item.name}`} value={item.name}>{item.name} · {item.kind}</option>)}</select></label>
+        </div>
+        <div className="comparison-table" role="table" aria-label="Dados comparativos">
+          <div className="comparison-head" role="row"><span role="columnheader">DADO</span><strong role="columnheader">{comparedA.name}</strong><strong role="columnheader">{comparedB.name}</strong></div>
+          <div role="row"><span role="cell">Diâmetro</span><strong role="cell">{comparedA.moon ? moonKnowledge[comparedA.name]?.diameter ?? '—' : planetFacts[comparedA.name]?.diameter ?? '—'}</strong><strong role="cell">{comparedB.moon ? moonKnowledge[comparedB.name]?.diameter ?? '—' : planetFacts[comparedB.name]?.diameter ?? '—'}</strong></div>
+          <div role="row"><span role="cell">Distância orbital</span><strong role="cell">{comparedA.moon ? moonKnowledge[comparedA.name]?.orbit ?? '—' : `${comparedA.planet.distance} do Sol`}</strong><strong role="cell">{comparedB.moon ? moonKnowledge[comparedB.name]?.orbit ?? '—' : `${comparedB.planet.distance} do Sol`}</strong></div>
+          <div role="row"><span role="cell">Período orbital</span><strong role="cell">{comparedA.moon ? moonKnowledge[comparedA.name]?.period ?? '—' : comparedA.planet.period}</strong><strong role="cell">{comparedB.moon ? moonKnowledge[comparedB.name]?.period ?? '—' : comparedB.planet.period}</strong></div>
+          <div role="row"><span role="cell">Tipo</span><strong role="cell">{comparedA.kind}</strong><strong role="cell">{comparedB.kind}</strong></div>
+        </div>
+        <p className="compare-note">Distâncias de luas são medidas a partir do planeta hospedeiro; de planetas, a partir do Sol.</p>
       </section>}
 
       {/* Barra da vista próxima: voltar, atmosfera e luas visíveis */}
@@ -1125,10 +1237,10 @@ export default function SolarSystemExplorer() {
           {closeUpPlanet.moonList.length > 0 && (
             <div className="moon-chips">
               {closeUpPlanet.moonList.map((moon) => (
-                <span className="moon-chip" key={moon.name}>
+                <button className={`moon-chip ${selectedMoon?.moon.name === moon.name ? 'selected' : ''}`} key={moon.name} onClick={() => { setSelectedMoon({ moon, planet: closeUpPlanet }); setSelected(closeUpPlanet); setInfoOpen(true) }} aria-label={`Ver dados de ${moon.name}`}>
                   <span className="moon-dot" />
                   {moon.name}
-                </span>
+                </button>
               ))}
 
               <span className="moon-count">
@@ -1245,6 +1357,10 @@ export default function SolarSystemExplorer() {
           <p className="layers-note">
             Cometas e grade espacial não fazem parte desta cena.
           </p>
+          <details className="scale-explainer">
+            <summary><Ruler size={14} /> Como ler as escalas</summary>
+            <p>Os tamanhos dos corpos e as distâncias entre órbitas são representativos e não seguem uma escala única. As posições e velocidades da animação são simplificadas para facilitar a visualização. Os valores físicos ficam identificados nos painéis de dados.</p>
+          </details>
           <details className="texture-credits">
             <summary>Fontes das texturas <ExternalLink size={13} /></summary>
             <div className="texture-credit-links">
@@ -1316,7 +1432,7 @@ export default function SolarSystemExplorer() {
             <p>{guideStop.fact}</p>
           </div>
           <a className="fact-source" href="https://science.nasa.gov/solar-system/planets/" target="_blank" rel="noreferrer">Curiosidades: NASA Solar System</a>
-          <button className="travel-button" onClick={() => { setSelected(guidePlanet); setInfoOpen(true); setCloseUp(null); setFollowName(guidePlanet.name) }}><Crosshair size={15} /> VIAJAR ATÉ {guideStop.name.toUpperCase()} <ChevronRight size={15} /></button>
+          <button className="travel-button" onClick={() => { setSelected(guidePlanet); setSelectedMoon(null); setInfoOpen(true); setCloseUp(null); setFollowName(guidePlanet.name) }}><Crosshair size={15} /> VIAJAR ATÉ {guideStop.name.toUpperCase()} <ChevronRight size={15} /></button>
           <button className="guide-next" onClick={() => setGuideIndex((index) => (index + 1) % guideStops.length)}>PRÓXIMA CURIOSIDADE <ChevronRight size={14} /></button>
         </section>
       )}

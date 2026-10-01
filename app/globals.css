@@ -803,6 +803,19 @@ input:focus-visible {
   font-size: 0.56rem;
 }
 
+.moon-chip {
+  color: #a9bdd3;
+  background: rgba(8, 19, 29, 0.58);
+  cursor: pointer;
+}
+
+.moon-chip:hover,
+.moon-chip.selected {
+  color: var(--accent);
+  border-color: rgba(131, 212, 202, 0.6);
+  background: rgba(61, 123, 122, 0.18);
+}
+
 .moon-dot {
   width: 0.3rem;
   height: 0.3rem;
@@ -881,6 +894,28 @@ input:focus-visible {
   font-size: 0.62rem;
   line-height: 1.5;
 }
+
+.scale-explainer {
+  margin-top: 0.75rem;
+  padding: 0.65rem 0.6rem;
+  border: 1px solid rgba(140, 180, 195, 0.14);
+  border-radius: 0.5rem;
+  background: rgba(145, 164, 184, 0.045);
+}
+
+.scale-explainer summary {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: #9ab9c5;
+  font-size: 0.62rem;
+  cursor: pointer;
+  list-style: none;
+}
+
+.scale-explainer summary::-webkit-details-marker { display: none; }
+.scale-explainer summary:hover { color: var(--accent); }
+.scale-explainer p { margin: 0.55rem 0 0; color: #8298a6; font-size: 0.59rem; line-height: 1.55; }
 
 .texture-credits {
   margin-top: 0.85rem;
@@ -1360,6 +1395,7 @@ button.space-label.active {
 .layers-panel,
 .hand-panel,
 .guide-panel,
+.compare-panel,
 .bottom-controls {
   left: 5.75rem;
 }
@@ -1416,6 +1452,37 @@ button.space-label.active {
   -webkit-backdrop-filter: blur(16px);
 }
 
+.compare-panel {
+  position: fixed;
+  top: calc(var(--topbar-h) + 1.7rem);
+  left: 5.75rem;
+  z-index: 25;
+  width: min(28rem, calc(100vw - 7rem));
+  max-height: calc(100svh - var(--topbar-h) - 2.5rem);
+  overflow: auto;
+  padding: 1rem;
+  color: var(--foreground);
+  background: var(--panel-strong);
+  border: 1px solid rgba(140, 180, 195, 0.22);
+  border-radius: 0.75rem;
+  box-shadow: 0 1rem 2.5rem rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.compare-panel h2 { margin: 0.35rem 0 0; color: #dce9ef; font-size: 1.2rem; font-weight: 400; }
+.compare-selectors { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; margin: 0.9rem 0; }
+.compare-selectors label { display: grid; gap: 0.35rem; color: #718b99; font: 600 0.48rem ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: 0.1em; }
+.compare-selectors select { min-width: 0; padding: 0.55rem 0.45rem; color: #c6d5dd; background: #0a1720; border: 1px solid rgba(150, 180, 200, 0.22); border-radius: 0.4rem; font: 0.62rem ui-sans-serif, system-ui, sans-serif; }
+.comparison-table { display: grid; gap: 0; overflow: hidden; border: 1px solid rgba(150, 180, 200, 0.15); border-radius: 0.5rem; }
+.comparison-table > div { display: grid; grid-template-columns: minmax(4.1rem, 0.75fr) minmax(0, 1fr) minmax(0, 1fr); gap: 0.45rem; padding: 0.55rem 0.5rem; border-top: 1px solid rgba(150, 180, 200, 0.1); }
+.comparison-table > div:first-child { border-top: 0; }
+.comparison-table span { color: #8298a6; font-size: 0.57rem; }
+.comparison-table strong { min-width: 0; color: #c8d8e1; font-size: 0.57rem; font-weight: 500; overflow-wrap: anywhere; }
+.comparison-table .comparison-head { background: rgba(131, 212, 202, 0.06); }
+.comparison-table .comparison-head strong { color: var(--accent); }
+.compare-note { margin: 0.6rem 0 0; color: #758d9b; font-size: 0.56rem; line-height: 1.45; }
+
 .guide-destination { margin-top: 0.85rem; padding: 0.8rem; background: rgba(131, 212, 202, 0.06); border: 1px solid rgba(131, 212, 202, 0.14); border-radius: 0.55rem; }
 .guide-kicker { display: block; color: #6f8d9d; font: 600 0.5rem ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: 0.15em; }
 .guide-destination strong { display: block; margin-top: 0.35rem; color: #dce9ef; font-size: 1.15rem; font-weight: 450; }
@@ -1446,20 +1513,20 @@ button.space-label.active {
     flex: 1 1 0;
     width: auto;
     min-width: 0;
-    min-height: 3.45rem;
+    min-height: 44px;
     gap: 0.28rem;
     font-size: 0.4rem;
   }
 
   .rail-bottom {
-    margin-top: 0;
-    padding-bottom: 0;
+    display: none;
   }
 
   .search-panel,
   .layers-panel,
   .hand-panel,
   .guide-panel,
+  .compare-panel,
   .bottom-controls {
     left: 0.75rem;
     right: 0.75rem;
@@ -1492,9 +1559,10 @@ button.space-label.active {
   }
 
   .guide-panel { top: calc(var(--topbar-h) + 0.75rem); bottom: auto; max-height: min(38svh, 24rem); overflow-y: auto; }
+  .compare-panel { top: calc(var(--topbar-h) + 0.75rem); max-height: min(42svh, 28rem); }
 
   .info-panel {
     bottom: 5.2rem;
-    max-height: 28svh;
+    max-height: 38svh;
   }
 }
