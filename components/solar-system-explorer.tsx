@@ -5,7 +5,7 @@ import { OrbitControls, Stars, Html, Line, Sparkles, useTexture, useProgress } f
 import { Suspense, useCallback, useLayoutEffect, useMemo, useRef, useState, useEffect, type RefObject } from 'react'
 import * as THREE from 'three'
 import { Planet as TexturedPlanet, FlatPlanet } from './planet'
-import { Search, Orbit, Hand, Play, Pause, RotateCcw, Maximize2, Crosshair, ChevronRight, X, Layers3, Camera, MousePointer2, ZoomIn, ArrowLeft } from 'lucide-react'
+import { Search, Orbit, Hand, Play, Pause, RotateCcw, Maximize2, Crosshair, ChevronRight, X, Layers3, Camera, MousePointer2, ZoomIn, ArrowLeft, Compass } from 'lucide-react'
 
 const textures: Record<string, string> = {
   mercury: '/textures/mercury.jpg',
@@ -92,14 +92,37 @@ const planets: PlanetData[] = [
   { name: 'Vênus', key: 'venus', orbit: 4.8, size: .27, color: '#c8904d', type: 'Planeta rochoso', moons: '0', distance: '0,72 AU', period: '225 dias', description: 'Um mundo de nuvens densas e atmosfera extrema.', atmosphere: { color: '#e8c46a', opacity: .22 }, moonList: [] },
   { name: 'Terra', key: 'earth', orbit: 6.2, size: .3, color: '#3c75b9', type: 'Planeta rochoso', moons: '1', distance: '1,00 AU', period: '365,25 dias', description: 'Nosso planeta azul, com oceanos e vida conhecida.', atmosphere: { color: '#4da3ff', opacity: .18 }, moonList: [{ name: 'Lua', key: 'moon', relSize: .27, dist: 2.4, speed: .3, color: '#b8b8b8' }] },
   { name: 'Marte', key: 'mars', orbit: 7.6, size: .23, color: '#a85635', type: 'Planeta rochoso', moons: '2', distance: '1,52 AU', period: '687 dias', description: 'O planeta vermelho, marcado por vulcões e vales.', atmosphere: { color: '#d88a5a', opacity: .1 }, moonList: [{ name: 'Fobos', key: 'phobos', relSize: .17, dist: 1.6, speed: .9, color: '#7a6f66' }, { name: 'Deimos', key: 'deimos', relSize: .12, dist: 2.2, speed: .6, color: '#8a7a6a' }] },
-  { name: 'Júpiter', key: 'jupiter', orbit: 10.4, size: .78, color: '#d4a36e', type: 'Gigante gasoso', moons: '95', distance: '5,20 AU', period: '11,86 anos', description: 'O maior planeta do Sistema Solar.', atmosphere: { color: '#d4a36e', opacity: .08 }, moonList: [{ name: 'Io', key: 'io', relSize: .18, dist: 1.9, speed: .7, color: '#d9c04a' }, { name: 'Europa', key: 'europa', relSize: .16, dist: 2.3, speed: .55, color: '#d8cbb0' }, { name: 'Ganímedes', key: 'ganymede', relSize: .24, dist: 2.8, speed: .4, color: '#9a8a78' }, { name: 'Calisto', key: 'callisto', relSize: .21, dist: 3.4, speed: .3, color: '#6a5f52' }] },
-  { name: 'Saturno', key: 'saturn', orbit: 13.8, size: .68, color: '#c6a276', type: 'Gigante gasoso', moons: '146', distance: '9,54 AU', period: '29,45 anos', description: 'Gigante gasoso conhecido pelo seu magnífico sistema de anéis.', atmosphere: { color: '#e0c890', opacity: .08 }, moonList: [{ name: 'Encélado', key: 'enceladus', relSize: .1, dist: 1.9, speed: .8, color: '#e8f0f2' }, { name: 'Dione', key: 'dione', relSize: .12, dist: 2.2, speed: .65, color: '#b8b4ac' }, { name: 'Reia', key: 'rhea', relSize: .14, dist: 2.7, speed: .5, color: '#c4c0b8' }, { name: 'Titã', key: 'titan', relSize: .24, dist: 3.4, speed: .35, color: '#d08a3a', atmosphere: { color: '#e08b3a', opacity: .4, scale: 1.6 } }, { name: 'Jápeto', key: 'iapetus', relSize: .13, dist: 4.2, speed: .25, color: '#8a8278' }] },
-  { name: 'Urano', key: 'uranus', orbit: 17.1, size: .46, color: '#78b8c4', type: 'Gigante de gelo', moons: '28', distance: '19,19 AU', period: '84 anos', description: 'Um gigante de gelo que gira inclinado de lado.', atmosphere: { color: '#9fd8e0', opacity: .1 }, moonList: [{ name: 'Miranda', key: 'miranda', relSize: .09, dist: 1.7, speed: .8, color: '#a8a49e' }, { name: 'Ariel', key: 'ariel', relSize: .13, dist: 2.0, speed: .6, color: '#c8c4bc' }, { name: 'Umbriel', key: 'umbriel', relSize: .12, dist: 2.4, speed: .5, color: '#6a6866' }, { name: 'Titânia', key: 'titania', relSize: .17, dist: 2.9, speed: .4, color: '#a8988a' }, { name: 'Oberon', key: 'oberon', relSize: .16, dist: 3.3, speed: .32, color: '#988578' }] },
+  { name: 'Júpiter', key: 'jupiter', orbit: 10.4, size: .78, color: '#d4a36e', type: 'Gigante gasoso', moons: '115', distance: '5,20 AU', period: '11,86 anos', description: 'O maior planeta do Sistema Solar.', atmosphere: { color: '#d4a36e', opacity: .08 }, moonList: [{ name: 'Io', key: 'io', relSize: .18, dist: 1.9, speed: .7, color: '#d9c04a' }, { name: 'Europa', key: 'europa', relSize: .16, dist: 2.3, speed: .55, color: '#d8cbb0' }, { name: 'Ganímedes', key: 'ganymede', relSize: .24, dist: 2.8, speed: .4, color: '#9a8a78' }, { name: 'Calisto', key: 'callisto', relSize: .21, dist: 3.4, speed: .3, color: '#6a5f52' }] },
+  { name: 'Saturno', key: 'saturn', orbit: 13.8, size: .68, color: '#c6a276', type: 'Gigante gasoso', moons: '293', distance: '9,54 AU', period: '29,45 anos', description: 'Gigante gasoso conhecido pelo seu magnífico sistema de anéis.', atmosphere: { color: '#e0c890', opacity: .08 }, moonList: [{ name: 'Encélado', key: 'enceladus', relSize: .1, dist: 1.9, speed: .8, color: '#e8f0f2' }, { name: 'Dione', key: 'dione', relSize: .12, dist: 2.2, speed: .65, color: '#b8b4ac' }, { name: 'Reia', key: 'rhea', relSize: .14, dist: 2.7, speed: .5, color: '#c4c0b8' }, { name: 'Titã', key: 'titan', relSize: .24, dist: 3.4, speed: .35, color: '#d08a3a', atmosphere: { color: '#e08b3a', opacity: .4, scale: 1.6 } }, { name: 'Jápeto', key: 'iapetus', relSize: .13, dist: 4.2, speed: .25, color: '#8a8278' }] },
+  { name: 'Urano', key: 'uranus', orbit: 17.1, size: .46, color: '#78b8c4', type: 'Gigante de gelo', moons: '29', distance: '19,19 AU', period: '84 anos', description: 'Um gigante de gelo que gira inclinado de lado.', atmosphere: { color: '#9fd8e0', opacity: .1 }, moonList: [{ name: 'Miranda', key: 'miranda', relSize: .09, dist: 1.7, speed: .8, color: '#a8a49e' }, { name: 'Ariel', key: 'ariel', relSize: .13, dist: 2.0, speed: .6, color: '#c8c4bc' }, { name: 'Umbriel', key: 'umbriel', relSize: .12, dist: 2.4, speed: .5, color: '#6a6866' }, { name: 'Titânia', key: 'titania', relSize: .17, dist: 2.9, speed: .4, color: '#a8988a' }, { name: 'Oberon', key: 'oberon', relSize: .16, dist: 3.3, speed: .32, color: '#988578' }] },
   { name: 'Netuno', key: 'neptune', orbit: 20.4, size: .45, color: '#3558ca', type: 'Gigante de gelo', moons: '16', distance: '30,06 AU', period: '164,8 anos', description: 'O mundo mais distante, com ventos supersônicos.', atmosphere: { color: '#5a7fe0', opacity: .12 }, moonList: [{ name: 'Tritão', key: 'triton', relSize: .25, dist: 2.3, speed: .45, color: '#d8c4bc', retro: true }] },
   { name: 'Plutão', key: 'pluto', orbit: 23.5, size: .14, color: '#c8b8a8', type: 'Planeta anão', moons: '5', distance: '39,48 AU', period: '248 anos', description: 'O mais famoso planeta anão, com o coração de gelo Sputnik Planitia.', moonList: [{ name: 'Caronte', key: 'charon', relSize: .55, dist: 1.9, speed: .5, color: '#8a8a8c' }] },
 ]
 
 const planetSizes: Record<string, number> = Object.fromEntries(planets.map(p => [p.name, p.size]))
+const planetFacts: Record<string, { diameter: string; gravity: string }> = {
+  'Mercúrio': { diameter: '4.879 km', gravity: '3,7 m/s²' },
+  'Vênus': { diameter: '12.104 km', gravity: '8,9 m/s²' },
+  'Terra': { diameter: '12.756 km', gravity: '9,8 m/s²' },
+  'Marte': { diameter: '6.792 km', gravity: '3,7 m/s²' },
+  'Júpiter': { diameter: '142.984 km', gravity: '23,1 m/s²' },
+  'Saturno': { diameter: '120.536 km', gravity: '9,0 m/s²' },
+  'Urano': { diameter: '51.118 km', gravity: '8,7 m/s²' },
+  'Netuno': { diameter: '49.528 km', gravity: '11,0 m/s²' },
+  'Plutão': { diameter: '2.376 km', gravity: '0,7 m/s²' },
+}
+
+const guideStops = [
+  { name: 'Mercúrio', fact: 'Mercúrio completa uma volta ao redor do Sol em cerca de 88 dias terrestres.' },
+  { name: 'Vênus', fact: 'Vênus é o planeta mais quente: sua atmosfera densa retém muito calor.' },
+  { name: 'Terra', fact: 'Até agora, a Terra é o único mundo onde sabemos que existe vida.' },
+  { name: 'Marte', fact: 'Marte abriga o Olympus Mons, o maior vulcão conhecido do Sistema Solar.' },
+  { name: 'Júpiter', fact: 'Júpiter é o maior planeta do Sistema Solar e tem faixas de nuvens em movimento.' },
+  { name: 'Saturno', fact: 'Os anéis de Saturno são compostos principalmente de fragmentos de gelo e rocha.' },
+  { name: 'Urano', fact: 'O eixo de rotação de Urano é muito inclinado, fazendo o planeta girar quase de lado.' },
+  { name: 'Netuno', fact: 'Netuno é um gigante de gelo distante, com ventos extremamente velozes.' },
+  { name: 'Plutão', fact: 'Plutão é um planeta anão; Caronte é tão grande em relação a ele que ambos orbitam um centro comum fora de Plutão.' },
+]
 
 // Pré-carrega TODAS as texturas (uma chamada por URL, para bater com a chave de cache do useTexture).
 // Evita o "pulo" de FlatPlanet -> TexturedPlanet e alimenta a tela de carregamento (useProgress).
@@ -912,7 +935,7 @@ function Scene({
 }
 
 export default function SolarSystemExplorer() {
-  const [selected, setSelected] = useState<PlanetData>(planets[5]); const [showOrbits, setShowOrbits] = useState(true); const [belt, setBelt] = useState(true); const [playing, setPlaying] = useState(true); const [speed, setSpeed] = useState(1000); const [query, setQuery] = useState(''); const [hand, setHand] = useState(false); const [cameraActive, setCameraActive] = useState(false); const [layers, setLayers] = useState(false); const [followName, setFollowName] = useState<string | null>(null); const [closeUp, setCloseUp] = useState<string | null>(null)
+  const [selected, setSelected] = useState<PlanetData>(planets[5]); const [showOrbits, setShowOrbits] = useState(true); const [belt, setBelt] = useState(true); const [playing, setPlaying] = useState(true); const [speed, setSpeed] = useState(1000); const [query, setQuery] = useState(''); const [hand, setHand] = useState(false); const [cameraActive, setCameraActive] = useState(false); const [layers, setLayers] = useState(false); const [searchOpen, setSearchOpen] = useState(true); const [simulationOpen, setSimulationOpen] = useState(false); const [guidedOpen, setGuidedOpen] = useState(false); const [guideIndex, setGuideIndex] = useState(0); const [followName, setFollowName] = useState<string | null>(null); const [closeUp, setCloseUp] = useState<string | null>(null)
   const clock = useRef<SimClock>({ t: SIM_T0, speed: 1000, playing: true })
   const streamRef = useRef<MediaStream | null>(null)
   const { progress, active } = useProgress(); const [ready, setReady] = useState(false)
@@ -923,9 +946,28 @@ export default function SolarSystemExplorer() {
   useEffect(() => { const id = window.setTimeout(() => setReady(true), 8000); return () => window.clearTimeout(id) }, [])
   // Esc sai da vista próxima / do seguimento
   useEffect(() => { const h = (e: KeyboardEvent) => { if (e.key === 'Escape') { if (closeUp) setCloseUp(null); else if (followName) setFollowName(null) } }; window.addEventListener('keydown', h); return () => window.removeEventListener('keydown', h) }, [closeUp, followName])
+  useEffect(() => {
+    const handleSearchShortcut = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault()
+        setSearchOpen(true); setLayers(false); setHand(false); setSimulationOpen(false); setGuidedOpen(false)
+        window.requestAnimationFrame(() => document.querySelector<HTMLInputElement>('.search-box input')?.focus())
+      }
+    }
+    window.addEventListener('keydown', handleSearchShortcut)
+    return () => window.removeEventListener('keydown', handleSearchShortcut)
+  }, [])
   // libera a câmera ao sair da página
   useEffect(() => () => { streamRef.current?.getTracks().forEach(t => t.stop()) }, [])
-  const filtered = planets.filter(p => p.name.toLowerCase().includes(query.toLowerCase()))
+  const searchResults = planets.flatMap((planet) => [
+    { name: planet.name, kind: planet.type, planet },
+    ...planet.moonList.map((moon) => ({ name: moon.name, kind: `Lua de ${planet.name}`, planet })),
+  ]).filter((item) => {
+    const normalize = (value: string) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('pt-BR')
+    return normalize(item.name).includes(normalize(query.trim()))
+  })
+  const guideStop = guideStops[guideIndex]
+  const guidePlanet = planets.find((planet) => planet.name === guideStop.name) ?? planets[0]
   const toggleCamera = async () => {
     if (cameraActive) { streamRef.current?.getTracks().forEach(t => t.stop()); streamRef.current = null; setCameraActive(false); return }
     try { streamRef.current = await navigator.mediaDevices.getUserMedia({ video: true }); setCameraActive(true) } catch { setCameraActive(false) }
@@ -982,9 +1024,11 @@ export default function SolarSystemExplorer() {
       </header>
 
       <aside className="left-rail">
-        <button className="rail-button active"><Crosshair size={17} /><span>EXPLORAR</span></button>
-        <button className="rail-button" onClick={() => setLayers(!layers)}><Layers3 size={17} /><span>CAMADAS</span></button>
-        <button className={`rail-button ${hand ? 'active' : ''}`} onClick={() => setHand(!hand)}><Hand size={17} /><span>GESTOS</span></button>
+        <button className={`rail-button ${searchOpen ? 'active' : ''}`} aria-pressed={searchOpen} onClick={() => { setSearchOpen(!searchOpen); setLayers(false); setHand(false); setSimulationOpen(false); setGuidedOpen(false) }}><Crosshair size={17} /><span>EXPLORAR</span></button>
+        <button className={`rail-button ${layers ? 'active' : ''}`} aria-pressed={layers} onClick={() => { setLayers(!layers); setSearchOpen(false); setHand(false); setSimulationOpen(false); setGuidedOpen(false) }}><Layers3 size={17} /><span>CAMADAS</span></button>
+        <button className={`rail-button ${simulationOpen ? 'active' : ''}`} aria-pressed={simulationOpen} onClick={() => { setSimulationOpen(!simulationOpen); setSearchOpen(false); setLayers(false); setHand(false); setGuidedOpen(false) }}><Orbit size={17} /><span>TEMPO</span></button>
+        <button className={`rail-button ${guidedOpen ? 'active' : ''}`} aria-pressed={guidedOpen} onClick={() => { setGuidedOpen(!guidedOpen); setSearchOpen(false); setLayers(false); setHand(false); setSimulationOpen(false) }}><Compass size={17} /><span>GUIA</span></button>
+        <button className={`rail-button ${hand ? 'active' : ''}`} aria-pressed={hand} onClick={() => { setHand(!hand); setSearchOpen(false); setLayers(false); setSimulationOpen(false); setGuidedOpen(false) }}><Hand size={17} /><span>GESTOS</span></button>
         <div className="rail-bottom">
           <button
             className="rail-button"
@@ -996,7 +1040,7 @@ export default function SolarSystemExplorer() {
         </div>
       </aside>
 
-      <section className="search-panel">
+      {searchOpen && <section className="search-panel">
         <div className="eyebrow">NAVEGAÇÃO ESPACIAL</div>
 
         <h1>
@@ -1026,21 +1070,24 @@ export default function SolarSystemExplorer() {
 
         {query && (
           <div className="search-results">
-            {filtered.map((planet) => (
+            {searchResults.map((item) => (
               <button
-                key={planet.name}
+                key={`${item.kind}-${item.name}`}
                 onClick={() => {
-                  setSelected(planet)
+                  setSelected(item.planet)
+                  setFollowName(null)
+                  setCloseUp(null)
                   setQuery('')
                 }}
               >
-                {planet.name}
+                <span>{item.name}<small className="search-kind">{item.kind}</small></span>
                 <ChevronRight size={14} />
               </button>
             ))}
+            {searchResults.length === 0 && <p className="search-empty">Nenhum planeta ou lua encontrado.</p>}
           </div>
         )}
-      </section>
+      </section>}
 
       <section className="info-panel"><div className="panel-header"><div><span className="eyebrow">OBJETO SELECIONADO</span><h2>{selected.name}</h2></div><span className="planet-index">0{planets.indexOf(selected) + 1} / 0{planets.length}</span></div><div className="planet-orb" style={textures[selected.key] ? { backgroundImage: `url(${textures[selected.key]})` } : { backgroundColor: selected.color }}><div className="orb-glow" /></div>
         <div className="object-meta">
@@ -1050,7 +1097,8 @@ export default function SolarSystemExplorer() {
             ESCALA VISUAL REPRESENTATIVA
           </span>
         </div>
-        <p>{selected.description}</p><div className="data-grid"><div><small>DISTÂNCIA DO SOL</small><strong>{selected.distance}</strong></div><div><small>PERÍODO ORBITAL</small><strong>{selected.period}</strong></div><div><small>SATÉLITES NATURAIS</small><strong>{selected.moons}</strong></div><div><small>STATUS</small><strong className="live">OBSERVADO</strong></div></div>
+        <p>{selected.description}</p><div className="data-grid"><div><small>DIÂMETRO MÉDIO</small><strong>{planetFacts[selected.name]?.diameter ?? '—'}</strong></div><div><small>GRAVIDADE MÉDIA{selected.type.includes('Gigante') ? ' (1 BAR)' : ''}</small><strong>{planetFacts[selected.name]?.gravity ?? '—'}</strong></div><div><small>DISTÂNCIA MÉDIA DO SOL</small><strong>{selected.distance}</strong></div><div><small>PERÍODO ORBITAL</small><strong>{selected.period}</strong></div><div><small>SATÉLITES CONHECIDOS · 2026</small><strong>{selected.moons}</strong></div><div><small>CLASSIFICAÇÃO</small><strong>{selected.type}</strong></div></div>
+        <a className="fact-source" href="https://nssdc.gsfc.nasa.gov/planetary/factsheet/" target="_blank" rel="noreferrer">Dados: NASA Goddard · Fact Sheet</a>
         <button className="travel-button" onClick={() => { setCloseUp(null); setFollowName(selected.name) }}><Crosshair size={15} /> VIAJAR ATÉ OBJETO <ChevronRight size={15} /></button>
         <button className="travel-button secondary" onClick={() => { setFollowName(null); setCloseUp(selected.name) }}><ZoomIn size={15} /> OBSERVAR DE PERTO <ChevronRight size={15} /></button>
       </section>
@@ -1091,7 +1139,7 @@ export default function SolarSystemExplorer() {
         </section>
       )}
 
-      <section className="bottom-controls">
+      {simulationOpen && <section className="bottom-controls">
         <div className="control-group">
           <span className="eyebrow">SIMULAÇÃO TEMPORAL</span>
 
@@ -1126,8 +1174,8 @@ export default function SolarSystemExplorer() {
         </div>
 
         <div className="speed-control">
-          <span>VELOCIDADE</span>
-          <strong>{speed.toLocaleString('pt-BR')}</strong>
+          <span>VELOCIDADE DA SIMULAÇÃO</span>
+          <strong>×{speed.toLocaleString('pt-BR')}</strong>
 
           <input
             aria-label="Velocidade da simulação"
@@ -1138,6 +1186,11 @@ export default function SolarSystemExplorer() {
             value={speed}
             onChange={(event) => setSpeed(Number(event.target.value))}
           />
+          <div className="speed-presets" aria-label="Presets de velocidade">
+            {[{ label: 'NORMAL', value: 1000 }, { label: 'RÁPIDA', value: 10000 }, { label: 'MÁXIMA', value: 1000000 }].map((preset) => (
+              <button key={preset.label} className={speed === preset.value ? 'selected' : ''} aria-pressed={speed === preset.value} onClick={() => setSpeed(preset.value)}>{preset.label}</button>
+            ))}
+          </div>
         </div>
 
         <div className="view-control">
@@ -1159,7 +1212,7 @@ export default function SolarSystemExplorer() {
             ASTEROIDES
           </button>
         </div>
-      </section>
+      </section>}
 
       {layers && (
         <section className="layers-panel">
@@ -1234,6 +1287,23 @@ export default function SolarSystemExplorer() {
               ? 'ENCERRAR ACESSO À CÂMERA'
               : 'SOLICITAR ACESSO À CÂMERA'}
           </button>
+        </section>
+      )}
+
+      {guidedOpen && (
+        <section className="guide-panel">
+          <div className="panel-header">
+            <div><span className="eyebrow">ROTEIRO DE DESCOBERTA</span><h2>Parada {guideIndex + 1} de {guideStops.length}</h2></div>
+            <button className="close-small" aria-label="Fechar guia" onClick={() => setGuidedOpen(false)}><X size={15} /></button>
+          </div>
+          <div className="guide-destination">
+            <span className="guide-kicker">PRÓXIMO DESTINO</span>
+            <strong>{guideStop.name}</strong>
+            <p>{guideStop.fact}</p>
+          </div>
+          <a className="fact-source" href="https://science.nasa.gov/solar-system/planets/" target="_blank" rel="noreferrer">Curiosidades: NASA Solar System</a>
+          <button className="travel-button" onClick={() => { setSelected(guidePlanet); setCloseUp(null); setFollowName(guidePlanet.name) }}><Crosshair size={15} /> VIAJAR ATÉ {guideStop.name.toUpperCase()} <ChevronRight size={15} /></button>
+          <button className="guide-next" onClick={() => setGuideIndex((index) => (index + 1) % guideStops.length)}>PRÓXIMA CURIOSIDADE <ChevronRight size={14} /></button>
         </section>
       )}
 
