@@ -1841,3 +1841,22 @@ button.space-label.active {
     scroll-behavior: auto !important;
   }
 }
+
+/* ===== Card lateral: mostrar / ocultar (planetas e nebulosas) ===== */
+.card-toggle {
+  position: fixed; z-index: 21; top: calc(var(--topbar-h) + 2rem); right: 1.5rem;
+  display: inline-flex; align-items: center; gap: .45rem; min-height: 2.4rem; padding: 0 .85rem;
+  color: var(--accent); background: rgba(8, 19, 29, .88);
+  border: 1px solid rgba(131, 212, 202, .28); border-radius: .6rem;
+  font: 600 .52rem ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .1em;
+  backdrop-filter: blur(14px); cursor: pointer;
+}
+.card-toggle:hover, .card-toggle:focus-visible { background: rgba(131, 212, 202, .12); outline: none; }
+.nebula-card-art { position: relative; margin: .65rem 0; border-radius: .55rem; overflow: hidden; background: #02060a; }
+.nebula-card-art img { display: block; width: 100%; max-height: 9.5rem; object-fit: cover; }
+.nebula-card-art small { position: absolute; left: .4rem; bottom: .3rem; right: .4rem; color: rgba(223, 233, 245, .7); font: .38rem ui-monospace, monospace; letter-spacing: .04em; text-shadow: 0 0 4px #000; }
+.nebula-card-fact { display: block; margin: .3rem 0 .5rem; color: var(--accent); font-size: .74rem; font-weight: 500; line-height: 1.45; }
+.teacher-mode .card-toggle { display: none; }
+@media (max-width: 800px) {
+  .card-toggle { top: auto; bottom: 5.2rem; right: .75rem; }
+}

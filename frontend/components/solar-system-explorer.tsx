@@ -2,7 +2,7 @@
 
 import { useProgress } from '@react-three/drei'
 import { useRef, useState, useEffect } from 'react'
-import { Search, Orbit, Hand, Play, Pause, Maximize2, ChevronRight, X, Layers3, Camera, MousePointer2, ZoomIn, ArrowLeft, Compass, GitCompareArrows, BookOpen, Presentation, Check, Telescope, MoreHorizontal, Sparkles as SparklesIcon } from 'lucide-react'
+import { Search, Orbit, Hand, Play, Pause, Maximize2, ChevronRight, X, Layers3, Camera, MousePointer2, ZoomIn, ArrowLeft, Compass, GitCompareArrows, BookOpen, Presentation, Check, Telescope, MoreHorizontal, Sparkles as SparklesIcon, PanelRightOpen, PanelRightClose } from 'lucide-react'
 import { SIM_T0, SimClock } from './solar/clock'
 import { CatalogObject, catalogObjects, CosmosObject, cosmosObjects, lessons, moonKnowledge, MoonSelection, PlanetData, planets } from './solar/data'
 import { preloadNebulaTextures } from './solar/preload'
@@ -16,6 +16,7 @@ import { SimulationPanel } from './solar/panels/simulation-panel'
 import { LayersPanel } from './solar/panels/layers-panel'
 import { HandPanel } from './solar/panels/hand-panel'
 import { GuidePanel } from './solar/panels/guide-panel'
+import { NebulaCard } from './solar/panels/nebula-card'
 
 /** "Júpiter" -> "jupiter" (usado no link compartilhável ?planeta=jupiter). */
 const planetSlug = (name: string) => name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
@@ -56,6 +57,7 @@ export default function SolarSystemExplorer() {
   const [cosmosSelection, setCosmosSelection] = useState('Nebulosa de Órion')
   const [deepSpaceMode, setDeepSpaceMode] = useState(false)
   const [nebulaFocus, setNebulaFocus] = useState<string | null>(null)
+  const [nebulaCardOpen, setNebulaCardOpen] = useState(true)
   const [followName, setFollowName] = useState<string | null>(null)
   const [closeUp, setCloseUp] = useState<string | null>(null)
   const clock = useRef<SimClock>({ t: SIM_T0, speed: 1000, playing: true })
@@ -164,7 +166,7 @@ export default function SolarSystemExplorer() {
     }
   }
   const selectNebula = (object: CosmosObject) => {
-    setCosmosOpen(false); setCosmosTab('nebula'); setCosmosSelection(object.name); setNebulaFocus(object.name); setDeepSpaceMode(true)
+    setCosmosOpen(false); setCosmosTab('nebula'); setCosmosSelection(object.name); setNebulaFocus(object.name); setNebulaCardOpen(true); setDeepSpaceMode(true)
     setInfoOpen(false); setSearchOpen(false); setLayers(false); setHand(false); setSimulationOpen(false); setGuidedOpen(false); setCompareOpen(false)
   }
   const changeSelectedPlanet = (offset: number) => {
@@ -198,6 +200,9 @@ export default function SolarSystemExplorer() {
   const comparedB = catalogObjects.find((item) => item.name === compareB) ?? catalogObjects[1]
   const visibleCosmosObjects = cosmosObjects.filter((item) => cosmosTab === 'nebula' ? item.group === 'Nebulosa' : item.group !== 'Nebulosa')
   const selectedCosmosObject = visibleCosmosObjects.find((item) => item.name === cosmosSelection) ?? visibleCosmosObjects[0]
+  const focusedNebula = nebulaFocus ? cosmosObjects.find((item) => item.name === nebulaFocus && item.group === 'Nebulosa') : null
+  const showPlanetToggle = !infoOpen && !deepSpaceMode && !teacherMode && !compareOpen
+  const showNebulaToggle = !!focusedNebula && !nebulaCardOpen && deepSpaceMode && !cosmosOpen && !teacherMode
   return (
     <main className={`explorer ${closeUp ? 'is-closeup' : ''} ${teacherMode ? 'teacher-mode' : ''} ${deepSpaceMode ? 'deep-space-mode' : ''}`}>
       {!ready && <div className="loader-overlay" role="status" aria-live="polite"><div className="loader-box"><Orbit className="loader-spin" size={28} /><span>CARREGANDO TEXTURAS · {Math.round(progress)}%</span><div className="loader-track"><div className="loader-fill" style={{ width: `${progress}%` }} /></div></div></div>}
@@ -304,7 +309,11 @@ export default function SolarSystemExplorer() {
 
       {cosmosOpen && selectedCosmosObject && <CosmosPanel selected={selected} cosmosTab={cosmosTab} cosmosSelection={cosmosSelection} nebulaFocus={nebulaFocus} visibleCosmosObjects={visibleCosmosObjects} selectedCosmosObject={selectedCosmosObject} setCosmosOpen={setCosmosOpen} setCosmosTab={setCosmosTab} setCosmosSelection={setCosmosSelection} setDeepSpaceMode={setDeepSpaceMode} setNebulaFocus={setNebulaFocus} />}
 
-      {deepSpaceMode && <section className="deep-space-bar"><div><Telescope size={16} /><strong>{nebulaFocus ? `APROXIMAÇÃO · ${nebulaFocus.toUpperCase()}` : 'UNIVERSO PROFUNDO'}</strong><small>POSIÇÕES ESQUEMÁTICAS · DISTÂNCIAS EM ANOS-LUZ</small></div><button onClick={() => setNebulaFocus(null)} disabled={!nebulaFocus}><ZoomIn size={14} /> VISÃO GERAL</button><button onClick={() => setCosmosOpen(true)}><SparklesIcon size={14} /> DETALHES</button><button className="deep-space-exit" onClick={() => { setDeepSpaceMode(false); setNebulaFocus(null); setCosmosOpen(false); setInfoOpen(true) }}><ArrowLeft size={14} /> SISTEMA SOLAR</button></section>}
+      {deepSpaceMode && <section className="deep-space-bar"><div><Telescope size={16} /><strong>{nebulaFocus ? `APROXIMAÇÃO · ${nebulaFocus.toUpperCase()}` : 'UNIVERSO PROFUNDO'}</strong><small>POSIÇÕES ESQUEMÁTICAS · DISTÂNCIAS EM ANOS-LUZ</small></div><button onClick={() => setNebulaFocus(null)} disabled={!nebulaFocus}><ZoomIn size={14} /> VISÃO GERAL</button>{focusedNebula && <button aria-pressed={nebulaCardOpen} onClick={() => setNebulaCardOpen(!nebulaCardOpen)}>{nebulaCardOpen ? <PanelRightClose size={14} /> : <PanelRightOpen size={14} />} {nebulaCardOpen ? 'OCULTAR CARD' : 'MOSTRAR CARD'}</button>}<button onClick={() => setCosmosOpen(true)}><SparklesIcon size={14} /> CATÁLOGO</button><button className="deep-space-exit" onClick={() => { setDeepSpaceMode(false); setNebulaFocus(null); setCosmosOpen(false); setInfoOpen(true) }}><ArrowLeft size={14} /> SISTEMA SOLAR</button></section>}
+
+      {deepSpaceMode && focusedNebula && nebulaCardOpen && !cosmosOpen && !teacherMode && <NebulaCard object={focusedNebula} onHide={() => setNebulaCardOpen(false)} />}
+
+      {(showPlanetToggle || showNebulaToggle) && <button className="card-toggle" onClick={() => showPlanetToggle ? setInfoOpen(true) : setNebulaCardOpen(true)}><PanelRightOpen size={15} /> {showPlanetToggle ? 'MOSTRAR DADOS' : 'MOSTRAR CARD'}</button>}
 
       {infoOpen && <InfoPanel selected={selected} selectedMoon={selectedMoon} selectedMoonFacts={selectedMoonFacts} changeSelectedPlanet={changeSelectedPlanet} setSelectedMoon={setSelectedMoon} setInfoOpen={setInfoOpen} setFollowName={setFollowName} setCloseUp={setCloseUp} />}
 

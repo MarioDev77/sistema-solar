@@ -1,7 +1,7 @@
 'use client'
 
 import type { Dispatch, SetStateAction } from 'react'
-import { Crosshair, ChevronLeft, ChevronRight, X, ZoomIn, ArrowLeft } from 'lucide-react'
+import { Crosshair, ChevronLeft, ChevronRight, PanelRightClose, ZoomIn, ArrowLeft } from 'lucide-react'
 import { MoonKnowledge, MoonSelection, PlanetData, planetFacts, planets } from '../data'
 import { textures } from '../textures'
 
@@ -13,7 +13,7 @@ export function InfoPanel({ selected, selectedMoon, selectedMoonFacts, changeSel
         <div className="planet-panel-actions">
           <span className="planet-index">{selectedMoon ? 'LUA' : `0${planets.indexOf(selected) + 1} / 0${planets.length}`}</span>
           {!selectedMoon && <><button className="planet-nav" aria-label="Planeta anterior" onClick={() => changeSelectedPlanet(-1)}><ChevronLeft size={16} /></button><button className="planet-nav" aria-label="Próximo planeta" onClick={() => changeSelectedPlanet(1)}><ChevronRight size={16} /></button></>}
-          <button className="close-small" aria-label="Fechar painel de dados" onClick={() => { setInfoOpen(false); setSelectedMoon(null); setCloseUp(null); setFollowName(null) }}><X size={16} /></button>
+          <button className="close-small" aria-label="Ocultar card de dados (continua vendo o objeto)" title="Ocultar card" onClick={() => setInfoOpen(false)}><PanelRightClose size={16} /></button>
         </div>
       </div>
       <div className="planet-orb" style={textures[selectedMoon?.moon.key ?? selected.key] ? { backgroundImage: `url(${textures[selectedMoon?.moon.key ?? selected.key]})`, ...((selectedMoon?.moon.key ?? selected.key) === 'titan' ? { backgroundColor: '#d3914f', backgroundBlendMode: 'multiply' as const } : {}) } : { backgroundColor: selectedMoon?.moon.color ?? selected.color }}><div className="orb-glow" /></div>
