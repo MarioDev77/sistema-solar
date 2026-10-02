@@ -5,7 +5,6 @@ import './globals.css'
 export const metadata: Metadata = {
   title: 'Astra/Lab — Observatório Virtual',
   description: 'Explore o Sistema Solar em uma experiência 3D científica e interativa.',
-  generator: 'v0.app',
   icons: {
     icon: [
       {

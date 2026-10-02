@@ -213,6 +213,7 @@ export function MoonBody({
   clock,
   showLabel,
   detail,
+  loadTexture = true,
 }: {
   moon: MoonData
   onSelect: () => void
@@ -220,6 +221,8 @@ export function MoonBody({
   clock: RefObject<SimClock>
   showLabel: boolean
   detail: number
+  /** false = esfera colorida leve; a textura só é baixada quando o planeta é focado/aproximado. */
+  loadTexture?: boolean
 }) {
   const ref = useRef<THREE.Group>(null!)
   const dist = planetSize * moon.dist
@@ -248,24 +251,32 @@ export function MoonBody({
 
   return (
     <group ref={ref} onClick={(event) => { event.stopPropagation(); onSelect() }} onDoubleClick={(event) => { event.stopPropagation(); onSelect() }}>
-      <Suspense
-        fallback={
-          <FlatPlanet
+      {loadTexture ? (
+        <Suspense
+          fallback={
+            <FlatPlanet
+              size={size}
+              color={moon.color}
+              segments={Math.min(32, detail)}
+            />
+          }
+        >
+          <TexturedPlanet
+            textureUrl={textures[moon.key]}
             size={size}
-            color={moon.color}
-            segments={Math.min(32, detail)}
+            materialColor={moon.key === 'titan' ? '#d3914f' : '#f8f4ec'}
+            rotationSpeed={0.1}
+            segments={Math.min(40, detail)}
+            roughness={0.9}
           />
-        }
-      >
-        <TexturedPlanet
-          textureUrl={textures[moon.key]}
+        </Suspense>
+      ) : (
+        <FlatPlanet
           size={size}
-          materialColor={moon.key === 'titan' ? '#d3914f' : '#f8f4ec'}
-          rotationSpeed={0.1}
-          segments={Math.min(40, detail)}
-          roughness={0.9}
+          color={moon.color}
+          segments={Math.min(32, detail)}
         />
-      </Suspense>
+      )}
 
       {moon.atmosphere && (
         <Atmosphere

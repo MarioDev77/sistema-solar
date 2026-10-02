@@ -1,5 +1,4 @@
-import { useTexture } from '@react-three/drei'
-import { nebulaTextures, TexKey, textures } from './textures'
+import { TexKey } from './textures'
 
 export type MoonData = {
   name: string; key: TexKey; relSize: number; dist: number; speed: number;
@@ -16,7 +15,7 @@ export type PlanetData = {
 
 export type MoonSelection = { moon: MoonData; planet: PlanetData }
 export type CatalogObject = { name: string; kind: string; planet: PlanetData; moon?: MoonData }
-type MoonKnowledge = { diameter: string; orbit: string; period: string; fact: string }
+export type MoonKnowledge = { diameter: string; orbit: string; period: string; fact: string }
 
 export const planets: PlanetData[] = [
   { name: 'Mercúrio', key: 'mercury', orbit: 3.5, size: .16, color: '#9e9e9e', type: 'Planeta rochoso', moons: '0', distance: '0,39 AU', period: '88 dias', description: 'O menor planeta e o mais próximo do Sol.', moonList: [] },
@@ -89,7 +88,7 @@ export const cosmosObjects: CosmosObject[] = [
   { name: 'Nuvem de Oort', group: 'Região', style: 'oort', summary: 'Reservatório distante, ainda não observado diretamente', detail: 'Modelo de uma região muito distante e aproximadamente esférica que pode fornecer cometas de longo período. É importante marcar que sua estrutura é inferida, não fotografada diretamente.', fact: 'Não está representada na escala da cena 3D.', source: 'https://science.nasa.gov/solar-system/oort-cloud/', sourceLabel: 'NASA · Nuvem de Oort' },
 ]
 
-type LessonPlan = {
+export type LessonPlan = {
   title: string
   target: string
   objective: string
@@ -134,11 +133,3 @@ export const lessons: LessonPlan[] = [
     steps: ['Preveja o sentido da mudança antes de mexer nos controles.', 'Mantenha a massa central em 1 massa solar.', 'Aumente a distância orbital e observe velocidade e gráfico de posição.'],
   },
 ]
-
-// Pré-carrega TODAS as texturas (uma chamada por URL, para bater com a chave de cache do useTexture).
-// Evita o "pulo" de FlatPlanet -> TexturedPlanet e alimenta a tela de carregamento (useProgress).
-if (typeof window !== 'undefined') {
-  Object.values(textures).forEach((url) => useTexture.preload(url))
-  Object.values(nebulaTextures).forEach((url) => useTexture.preload(url))
-  useTexture.preload('/textures/saturn-ring.png')
-}

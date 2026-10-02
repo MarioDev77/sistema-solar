@@ -1,9 +1,9 @@
 'use client'
 
 import * as THREE from 'three'
-import { useFrame } from '@react-three/fiber'
+import { useFrame, useThree } from '@react-three/fiber'
 import { Html } from '@react-three/drei'
-import { Suspense, useCallback, useLayoutEffect, useRef, type RefObject } from 'react'
+import { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type RefObject } from 'react'
 import { Planet as TexturedPlanet, FlatPlanet } from '@/components/planet'
 import { Atmosphere, MoonBody, SaturnRings } from './bodies'
 import { planetAngle, SimClock } from './clock'
@@ -37,6 +37,24 @@ export function Planet({
   detail: number
 }) {
   const ref = useRef<THREE.Group | null>(null)
+  const camera = useThree((state) => state.camera)
+  const worldPos = useMemo(() => new THREE.Vector3(), [])
+  // Texturas das luas só são baixadas quando o planeta é selecionado/observado ou a câmera chega perto.
+  const [moonsReady, setMoonsReady] = useState(false)
+  const moonReach = useMemo(
+    () => Math.max(0, ...data.moonList.map((moon) => moon.dist)) * data.size,
+    [data]
+  )
+
+  useEffect(() => {
+    if (selected || observing) setMoonsReady(true)
+  }, [selected, observing])
+
+  useFrame(() => {
+    if (moonsReady || data.moonList.length === 0 || !ref.current) return
+    ref.current.getWorldPosition(worldPos)
+    if (camera.position.distanceTo(worldPos) < Math.max(moonReach * 6, 4)) setMoonsReady(true)
+  })
 
   const place = () => {
     const group = ref.current
@@ -165,6 +183,7 @@ export function Planet({
               clock={clock}
               showLabel={showLabels && closeUpActive}
               detail={Math.min(40, detail)}
+              loadTexture={moonsReady}
             />
           </Suspense>
         ))}
