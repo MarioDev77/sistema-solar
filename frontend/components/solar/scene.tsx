@@ -11,6 +11,7 @@ import { SimClock, SimulationClock } from './clock'
 import { CosmosObject, cosmosObjects, MoonData, PlanetData, planets } from './data'
 import { DeepSpaceNebula } from './nebula'
 import { Planet } from './planet-system'
+import { TextureWarmup } from './texture-warmup'
 import { getRenderQuality, RenderQuality } from './textures'
 
 export function Scene({
@@ -92,6 +93,7 @@ export function Scene({
       />
 
       <SimulationClock clock={clock} />
+      <TextureWarmup />
       {deepSpaceMode ? <>
         {deepNebulas.map((object) => <Suspense key={object.name} fallback={null}><DeepSpaceNebula object={object} selected={nebulaFocus === object.name} register={(name, node) => { if (node) nebulaRefs.current[name] = node; else delete nebulaRefs.current[name] }} onSelect={onNebulaSelect} quality={quality} /></Suspense>)}
       </> : <>

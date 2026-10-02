@@ -1,11 +1,11 @@
 'use client'
 
-import { useProgress } from '@react-three/drei'
 import { useRef, useState, useEffect } from 'react'
-import { Search, Orbit, Hand, Play, Pause, Maximize2, ChevronRight, X, Layers3, Camera, MousePointer2, ZoomIn, ArrowLeft, Compass, GitCompareArrows, BookOpen, Presentation, Check, Telescope, MoreHorizontal, Sparkles as SparklesIcon, PanelRightOpen, PanelRightClose } from 'lucide-react'
+import { Search, Orbit, Hand, Play, Pause, Maximize2, ChevronRight, X, Layers3, Camera, MousePointer2, ZoomIn, ArrowLeft, Compass, GitCompareArrows, BookOpen, Presentation, Check, Telescope, MoreHorizontal, Sparkles as SparklesIcon, PanelRightOpen, PanelRightClose, Sigma } from 'lucide-react'
 import { SIM_T0, SimClock } from './solar/clock'
 import { CatalogObject, catalogObjects, CosmosObject, cosmosObjects, lessons, moonKnowledge, MoonSelection, PlanetData, planets } from './solar/data'
-import { preloadNebulaTextures } from './solar/preload'
+import { preloadMoonTexturesIdle, preloadNebulaTextures } from './solar/preload'
+import { LoadingScreen } from './solar/loading-screen'
 import { Scene } from './solar/scene'
 import { nebulaTextures } from './solar/textures'
 import { CosmosPanel } from './solar/panels/cosmos-panel'
@@ -17,6 +17,7 @@ import { LayersPanel } from './solar/panels/layers-panel'
 import { HandPanel } from './solar/panels/hand-panel'
 import { GuidePanel } from './solar/panels/guide-panel'
 import { NebulaCard } from './solar/panels/nebula-card'
+import { FormulasPanel } from './solar/panels/formulas-panel'
 
 /** "Júpiter" -> "jupiter" (usado no link compartilhável ?planeta=jupiter). */
 const planetSlug = (name: string) => name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
@@ -52,6 +53,7 @@ export default function SolarSystemExplorer() {
   const [experimentMass, setExperimentMass] = useState(1)
   const [experimentPlaying, setExperimentPlaying] = useState(true)
   const [teacherMode, setTeacherMode] = useState(false)
+  const [formulasOpen, setFormulasOpen] = useState(false)
   const [cosmosOpen, setCosmosOpen] = useState(false)
   const [cosmosTab, setCosmosTab] = useState<'nebula' | 'solar'>('nebula')
   const [cosmosSelection, setCosmosSelection] = useState('Nebulosa de Órion')
@@ -64,14 +66,13 @@ export default function SolarSystemExplorer() {
   const streamRef = useRef<MediaStream | null>(null)
   const keyActions = useRef({ previous: () => {}, next: () => {}, planetsEnabled: true })
   const urlSynced = useRef(false)
-  const { progress, active } = useProgress(); const [ready, setReady] = useState(false)
+  const [ready, setReady] = useState(false)
   // velocidade e play/pausa vão para o relógio por ref: mudar isso NÃO re-renderiza a cena por frame
   useEffect(() => { clock.current.speed = speed; clock.current.playing = playing }, [speed, playing])
-  // tela de carregamento: some quando as texturas terminam (com fallback para nunca travar)
-  useEffect(() => { if (progress >= 100 && !active) { const id = window.setTimeout(() => setReady(true), 350); return () => window.clearTimeout(id) } }, [progress, active])
-  useEffect(() => { const id = window.setTimeout(() => setReady(true), 8000); return () => window.clearTimeout(id) }, [])
+  // depois que a cena abriu, as texturas das luas chegam em segundo plano (sem competir com a abertura)
+  useEffect(() => { if (ready) preloadMoonTexturesIdle() }, [ready])
   // Esc sai da vista próxima / do seguimento
-  useEffect(() => { const h = (e: KeyboardEvent) => { if (e.key === 'Escape') { if (teacherMode) setTeacherMode(false); else if (moreToolsOpen) setMoreToolsOpen(false); else if (cosmosOpen) setCosmosOpen(false); else if (searchOpen) setSearchOpen(false); else if (compareOpen) { setCompareOpen(false); setInfoOpen(true) } else if (closeUp) { setCloseUp(null); setSelectedMoon(null) } else if (followName) setFollowName(null); else if (deepSpaceMode && nebulaFocus) setNebulaFocus(null); else if (deepSpaceMode) { setDeepSpaceMode(false); setInfoOpen(true) } } }; window.addEventListener('keydown', h); return () => window.removeEventListener('keydown', h) }, [closeUp, compareOpen, cosmosOpen, deepSpaceMode, followName, moreToolsOpen, nebulaFocus, searchOpen, teacherMode])
+  useEffect(() => { const h = (e: KeyboardEvent) => { if (e.key === 'Escape') { if (formulasOpen) setFormulasOpen(false); else if (teacherMode) setTeacherMode(false); else if (moreToolsOpen) setMoreToolsOpen(false); else if (cosmosOpen) setCosmosOpen(false); else if (searchOpen) setSearchOpen(false); else if (compareOpen) { setCompareOpen(false); setInfoOpen(true) } else if (closeUp) { setCloseUp(null); setSelectedMoon(null) } else if (followName) setFollowName(null); else if (deepSpaceMode && nebulaFocus) setNebulaFocus(null); else if (deepSpaceMode) { setDeepSpaceMode(false); setInfoOpen(true) } } }; window.addEventListener('keydown', h); return () => window.removeEventListener('keydown', h) }, [closeUp, compareOpen, cosmosOpen, deepSpaceMode, followName, formulasOpen, moreToolsOpen, nebulaFocus, searchOpen, teacherMode])
   useEffect(() => {
     const handleSearchShortcut = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
@@ -147,6 +148,7 @@ export default function SolarSystemExplorer() {
   const toggleTeacherMode = () => {
     const entering = !teacherMode
     setTeacherMode(entering)
+    setFormulasOpen(false)
     if (entering) {
       setPlaying(false)
       clock.current.playing = false
@@ -204,8 +206,8 @@ export default function SolarSystemExplorer() {
   const showPlanetToggle = !infoOpen && !deepSpaceMode && !teacherMode && !compareOpen
   const showNebulaToggle = !!focusedNebula && !nebulaCardOpen && deepSpaceMode && !cosmosOpen && !teacherMode
   return (
-    <main className={`explorer ${closeUp ? 'is-closeup' : ''} ${teacherMode ? 'teacher-mode' : ''} ${deepSpaceMode ? 'deep-space-mode' : ''}`}>
-      {!ready && <div className="loader-overlay" role="status" aria-live="polite"><div className="loader-box"><Orbit className="loader-spin" size={28} /><span>CARREGANDO TEXTURAS · {Math.round(progress)}%</span><div className="loader-track"><div className="loader-fill" style={{ width: `${progress}%` }} /></div></div></div>}
+    <main className={`explorer ${closeUp ? 'is-closeup' : ''} ${teacherMode ? 'teacher-mode' : ''} ${teacherMode && formulasOpen ? 'formulas-open' : ''} ${deepSpaceMode ? 'deep-space-mode' : ''}`}>
+      {!ready && <LoadingScreen onDone={() => setReady(true)} />}
       <div className="scene">
         <Scene selected={selected.name} showLabels={showLabels} followName={followName} closeUp={closeUp}
           onSelect={(p) => { setSelected(p); setSelectedMoon(null); setInfoOpen(true); setFollowName(null); setCloseUp(p.name) }}
@@ -254,8 +256,10 @@ export default function SolarSystemExplorer() {
         <button className={kuiperBelt ? 'selected' : ''} aria-pressed={kuiperBelt} onClick={() => setKuiperBelt(!kuiperBelt)}><span className="mini-dot" /> KUIPER</button>
         <button className={comets ? 'selected' : ''} aria-pressed={comets} onClick={() => setComets(!comets)}><Orbit size={14} /> COMETAS</button>
         <button className={infoOpen ? 'selected' : ''} aria-pressed={infoOpen} onClick={() => setInfoOpen(!infoOpen)}><BookOpen size={14} /> DADOS</button>
+        <button className={formulasOpen ? 'selected' : ''} aria-pressed={formulasOpen} onClick={() => setFormulasOpen(!formulasOpen)}><Sigma size={14} /> FÓRMULAS</button>
         <button className="teacher-exit" onClick={toggleTeacherMode}>ENCERRAR <X size={14} /></button>
       </section>}
+      {teacherMode && formulasOpen && <FormulasPanel planet={selected} onClose={() => setFormulasOpen(false)} />}
 
       <aside className="left-rail">
         <button className={`rail-button ${searchOpen ? 'active' : ''}`} aria-pressed={searchOpen} aria-label="Abrir busca" onClick={() => { setMoreToolsOpen(false); setSearchOpen(!searchOpen); setLayers(false); setHand(false); setSimulationOpen(false); setGuidedOpen(false); setCompareOpen(false); setCosmosOpen(false); setDeepSpaceMode(false); setNebulaFocus(null); setInfoOpen(true) }}><Search size={17} /><span>BUSCA</span></button>

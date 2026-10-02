@@ -51,6 +51,11 @@ export function configureTexture(
   gl: THREE.WebGLRenderer,
   maxAnisotropy = 16
 ) {
+  // Idempotente: a pré-aquecida (TextureWarmup) já configurou e enviou a textura à GPU;
+  // reconfigurar marcaria needsUpdate de novo e refaria o upload + mipmaps na primeira renderização.
+  if (texture.userData.solarConfigured) return
+  texture.userData.solarConfigured = true
+
   const maxSupported = Math.max(1, gl.capabilities.getMaxAnisotropy())
 
   texture.colorSpace = THREE.SRGBColorSpace

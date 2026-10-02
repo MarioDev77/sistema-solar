@@ -1,0 +1,37 @@
+Créditos das texturas
+
+pluto.jpg — NASA/JHUAPL/SwRI, “Pluto Global Color Map” (mosaico da missão New Horizons):
+https://science.nasa.gov/resource/pluto-global-color-map/
+
+charon.jpg — NASA/JPL-Caltech, mapa de textura do simulador JPL, criado por Don Davis e descrito pela própria página como fictício:
+https://maps.jpl.nasa.gov/tmaps/pluto.html
+
+As imagens foram mantidas nos caminhos já usados pelo projeto. Saturno e Netuno foram preservados porque as opções esféricas encontradas no catálogo JPL são mapas representativos/fictícios e têm resolução inferior às texturas existentes.
+
+Texturas do sistema de Saturno
+
+saturn.jpg — Textura equiretangular representativa do catálogo NASA/JPL Solar System Simulator; a página informa que o mapa é fictício e serve à visualização artística da atmosfera variável de Saturno:
+https://maps.jpl.nasa.gov/tmaps/saturn.html
+
+enceladus.jpg — Mosaico global colorido da Cassini, PIA18435:
+https://science.nasa.gov/photojournal/color-maps-of-enceladus-2014/
+
+dione.jpg — Mosaico global colorido da Cassini, PIA18434:
+https://science.nasa.gov/photojournal/color-maps-of-dione-2014/
+
+iapetus.jpg — Mosaico global colorido da Cassini, PIA18436:
+https://science.nasa.gov/photojournal/color-maps-of-iapetus-2014/
+
+rhea.jpg — Mosaico global colorido da Cassini, PIA18438:
+https://science.nasa.gov/photojournal/color-maps-of-rhea-2014/
+
+titan.jpg — Mapa global de Titã com dados da Cassini ISS, PIA19658; recortado para remover grade, coordenadas e moldura cartográfica:
+https://science.nasa.gov/photojournal/titan-global-map-june-2015/
+
+mimas.jpg — Mapa global colorido da Cassini, PIA18437 (cores realçadas):
+https://science.nasa.gov/resource/color-map-of-mimas-2014/
+
+tethys.jpg — Mosaico global colorido da Cassini, PIA18439 (cores realçadas):
+https://science.nasa.gov/resource/color-maps-of-tethys-2014/
+
+As cores dos mapas de Mimas e Tétis são realçadas e incluem faixas além da visão humana, conforme a documentação da NASA. As imagens foram redimensionadas para 2048 × 1024 para uso como mapas equiretangulares na simulação.

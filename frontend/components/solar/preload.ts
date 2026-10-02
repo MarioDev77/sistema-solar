@@ -9,9 +9,35 @@ import { nebulaTextures, textures } from './textures'
  */
 const SATURN_RING = '/textures/saturn-ring.png'
 
+export function coreTextureUrls() {
+  return [textures.sun, ...planets.map((planet) => textures[planet.key]), SATURN_RING].filter(Boolean)
+}
+
 export function preloadCoreTextures() {
-  const urls = [textures.sun, ...planets.map((planet) => textures[planet.key]), SATURN_RING]
-  urls.filter(Boolean).forEach((url) => useTexture.preload(url))
+  coreTextureUrls().forEach((url) => useTexture.preload(url))
+}
+
+let moonsPreloaded = false
+/**
+ * Baixa as texturas das luas em segundo plano, uma por vez e só quando o navegador está ocioso,
+ * depois que a cena já abriu. Assim a vista próxima de um planeta não "pisca" ao carregar as luas.
+ * Respeita o modo Economia de dados.
+ */
+export function preloadMoonTexturesIdle() {
+  if (moonsPreloaded || typeof window === 'undefined') return
+  moonsPreloaded = true
+  const connection = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection
+  if (connection?.saveData) return
+  const urls = planets.flatMap((planet) => planet.moonList.map((moon) => textures[moon.key])).filter(Boolean)
+  const idle = (cb: () => void) =>
+    typeof window.requestIdleCallback === 'function' ? window.requestIdleCallback(cb, { timeout: 2000 }) : window.setTimeout(cb, 250)
+  const next = () => {
+    const url = urls.shift()
+    if (!url) return
+    useTexture.preload(url)
+    idle(next)
+  }
+  idle(next)
 }
 
 let nebulasPreloaded = false

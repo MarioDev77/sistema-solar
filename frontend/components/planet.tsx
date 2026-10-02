@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { useTexture } from "@react-three/drei";
 import * as THREE from "three";
+import { configureTexture } from "@/components/solar/textures";
 
 interface PlanetProps {
   textureUrl: string;
@@ -46,19 +47,7 @@ export function Planet({
   const heightSegments = Math.max(24, Math.round(segments * 0.75));
 
   useEffect(() => {
-    const maxSupported = Math.max(
-      1,
-      gl.capabilities.getMaxAnisotropy()
-    );
-
-    texture.colorSpace = THREE.SRGBColorSpace;
-    texture.anisotropy = Math.min(16, maxSupported);
-    texture.minFilter = THREE.LinearMipmapLinearFilter;
-    texture.magFilter = THREE.LinearFilter;
-    texture.generateMipmaps = true;
-    texture.wrapS = THREE.RepeatWrapping;
-    texture.wrapT = THREE.ClampToEdgeWrapping;
-    texture.needsUpdate = true;
+    configureTexture(texture, gl, 16);
   }, [texture, gl]);
 
   useFrame((_, delta) => {

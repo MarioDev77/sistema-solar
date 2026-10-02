@@ -1,0 +1,42 @@
+Créditos das texturas (atualizado — alta resolução)
+==================================================
+
+PACOTE SOLAR SYSTEM SCOPE (CC BY 4.0 — exige atribuição)
+Baseadas em dados de elevação e imagens da NASA (Messenger, Viking,
+Cassini, Hubble). Download: https://www.solarsystemscope.com/textures/
+Atribuição: "Planet textures by Solar System Scope (CC BY 4.0),
+https://www.solarsystemscope.com/textures/"
+
+- sun.jpg, mercury.jpg, venus.jpg, earth.jpg, moon.jpg, mars.jpg,
+  jupiter.jpg, saturn.jpg, saturn-ring.png — versões 8K (8192×4096);
+  uranus.jpg e neptune.jpg — versões 2K (2048×1024, máx. disponível)
+- earth-night.jpg — mapa noturno da Terra (8K)
+- earth-clouds.jpg — mapa de nuvens da Terra (8K)
+
+NASA/JPL PHOTOJOURNAL (domínio público) — https://photojournal.jpl.nasa.gov
+- pluto.jpg — PIA11707, mosaico global colorido, New Horizons (NASA/JHUAPL/SwRI)
+- enceladus.jpg — PIA18435, mosaico global colorido, Cassini (NASA/JPL-Caltech/SSI/LPI)
+- dione.jpg — PIA18434 (idem)
+- iapetus.jpg — PIA18436 (idem)
+- mimas.jpg — PIA18437 (idem, cores realçadas)
+- rhea.jpg — PIA18438 (idem)
+- tethys.jpg — PIA18439 (idem, cores realçadas)
+- titan.jpg — PIA19658, mapa global Cassini ISS, jun. 2015
+Obs.: cores dos mapas de luas de Saturno são realçadas/ultravioleta, conforme
+a documentação da NASA. Arquivos originais são maiores que 4K; foram
+redimensionados para 4096×2048 (equiretangular 2:1).
+
+LUAS RESTANTES (mantidas das versões anteriores ou download manual)
+- io.jpg, europa.jpg, ganymede.jpg, callisto.jpg — mosaicos Galileu/Voyager;
+  alternativa 8K: buscar "Solarsystemscope texture" ou mapas equiretangulares
+  no Wikimedia Commons (categoria: Equirectangular projection texture maps)
+- triton.jpg — mosaico Voyager 2 (Wikimedia Commons)
+- titania.jpg, oberon.jpg, umbriel.jpg, ariel.jpg, miranda.jpg — Voyager 2
+  (dados de 1986; mapas completos ainda não existem — ver nota abaixo)
+- phobos.jpg, deimos.jpg — Mars Global Surveyor MOC / USGS
+- charon.jpg — mapa fictício do simulador JPL (maps.jpl.nasa.gov/tmaps/pluto.html);
+  melhor versão real: "Charon global map" New Horizons (LPI, 2018)
+
+NOTA: Saturno e Netuno do SSS são mapas representativos da atmosfera
+(mesmo caso do catálogo JPL). Urano/Netuno têm poucos dados reais de
+superfície (flyby Voyager 2, 1986/1989).
