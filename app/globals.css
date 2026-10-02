@@ -1673,6 +1673,87 @@ button.space-label.active {
 .guide-next { width: 100%; margin-top: 0.5rem; padding: 0.65rem 0.75rem; display: flex; align-items: center; justify-content: space-between; color: #a9c2cc; background: rgba(145, 164, 184, 0.08); border: 1px solid rgba(145, 164, 184, 0.2); border-radius: 0.45rem; font: 600 0.52rem ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: 0.06em; }
 .guide-next:hover { color: var(--accent); border-color: rgba(119, 204, 193, 0.45); }
 
+/* Controles essenciais em destaque; ferramentas ocasionais ficam reunidas em Mais. */
+.rail-more { position: relative; width: 3.8rem; }
+.rail-more > .rail-button { width: 100%; }
+.rail-more-menu {
+  position: fixed;
+  z-index: 35;
+  top: calc(var(--topbar-h) + 1.2rem);
+  left: 5.75rem;
+  width: 13rem;
+  display: grid;
+  gap: .2rem;
+  padding: .4rem;
+  background: rgba(7, 16, 24, .97);
+  border: 1px solid rgba(150, 180, 200, .16);
+  border-radius: .7rem;
+  box-shadow: 0 .8rem 2rem rgba(0, 0, 0, .34);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+.rail-more-menu button {
+  min-height: 2.65rem;
+  display: flex;
+  align-items: center;
+  gap: .65rem;
+  padding: 0 .7rem;
+  color: #9aadb8;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  border-radius: .45rem;
+  font: 500 .7rem ui-sans-serif, system-ui, sans-serif;
+  cursor: pointer;
+}
+.rail-more-menu button:hover,
+.rail-more-menu button.active { color: var(--accent); background: rgba(131, 212, 202, .08); }
+.rail-more-menu button svg { color: currentColor; }
+
+.bottom-controls {
+  width: min(15.5rem, calc(100vw - 7rem));
+  gap: .75rem;
+  padding: .85rem;
+  background: rgba(7, 16, 24, .94);
+  border-color: rgba(150, 180, 200, .15);
+  box-shadow: 0 .8rem 2rem rgba(0, 0, 0, .26);
+}
+.bottom-controls .control-group > .eyebrow { display: none; }
+.bottom-controls .time-row { margin-top: 0; }
+.bottom-controls .speed-control input { margin-top: .55rem; }
+.bottom-controls .speed-presets { margin-top: .35rem; }
+
+.info-panel {
+  width: min(17.5rem, calc(100vw - 6.5rem));
+  padding: .95rem;
+  background: linear-gradient(145deg, rgba(11, 23, 32, .93), rgba(5, 12, 18, .9));
+  border-color: rgba(150, 180, 200, .17);
+  box-shadow: 0 .8rem 2.2rem rgba(0, 0, 0, .24);
+}
+.info-panel .planet-orb { width: 6rem; height: 6rem; margin: .65rem auto; }
+.info-panel p { margin: .65rem 0; line-height: 1.5; }
+.info-panel .data-grid { gap: .65rem .55rem; padding: .7rem 0; }
+.info-panel .travel-button { min-height: 2.55rem; margin-top: .45rem; }
+.info-panel .travel-button + .travel-button { margin-top: .35rem; }
+
+@media (max-width: 800px) {
+  .rail-more { width: auto; flex: 1 1 0; min-width: 0; }
+  .rail-more-menu {
+    top: auto;
+    right: .5rem;
+    bottom: 5.1rem;
+    left: .5rem;
+    width: auto;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding: .45rem;
+  }
+  .rail-more-menu button { min-width: 0; min-height: 2.8rem; font-size: .72rem; }
+  .info-panel { width: auto; padding: .8rem; }
+  .info-panel .planet-orb { width: 4.5rem; height: 4.5rem; margin: .45rem auto; }
+  .info-panel .data-grid { gap: .5rem; padding: .6rem 0; }
+  .info-panel .travel-button { min-height: 2.35rem; }
+}
+
 @media (max-width: 800px) {
   .left-rail {
     display: flex;

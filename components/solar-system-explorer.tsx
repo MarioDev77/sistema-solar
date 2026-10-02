@@ -5,7 +5,7 @@ import { OrbitControls, Stars, Html, Line, Sparkles, useTexture, useProgress } f
 import { Suspense, useCallback, useLayoutEffect, useMemo, useRef, useState, useEffect, type RefObject } from 'react'
 import * as THREE from 'three'
 import { Planet as TexturedPlanet, FlatPlanet } from './planet'
-import { Search, Orbit, Hand, Play, Pause, RotateCcw, Maximize2, Crosshair, ChevronLeft, ChevronRight, X, Layers3, Camera, MousePointer2, ZoomIn, ArrowLeft, Compass, ExternalLink, GitCompareArrows, Ruler, BookOpen, Atom, Presentation, Check, Telescope, Sparkles as SparklesIcon } from 'lucide-react'
+import { Search, Orbit, Hand, Play, Pause, RotateCcw, Maximize2, Crosshair, ChevronLeft, ChevronRight, X, Layers3, Camera, MousePointer2, ZoomIn, ArrowLeft, Compass, ExternalLink, GitCompareArrows, Ruler, BookOpen, Atom, Presentation, Check, Telescope, Sparkles as SparklesIcon, MoreHorizontal } from 'lucide-react'
 
 const textures: Record<string, string> = {
   mercury: '/textures/mercury.jpg',
@@ -1314,6 +1314,7 @@ export default function SolarSystemExplorer() {
   const [guidedOpen, setGuidedOpen] = useState(false)
   const [guideTab, setGuideTab] = useState<'lesson' | 'experiment'>('lesson')
   const [compareOpen, setCompareOpen] = useState(false)
+  const [moreToolsOpen, setMoreToolsOpen] = useState(false)
   const [compareA, setCompareA] = useState('Terra')
   const [compareB, setCompareB] = useState('Saturno')
   const [lessonIndex, setLessonIndex] = useState(0)
@@ -1340,7 +1341,7 @@ export default function SolarSystemExplorer() {
   useEffect(() => { if (progress >= 100 && !active) { const id = window.setTimeout(() => setReady(true), 350); return () => window.clearTimeout(id) } }, [progress, active])
   useEffect(() => { const id = window.setTimeout(() => setReady(true), 8000); return () => window.clearTimeout(id) }, [])
   // Esc sai da vista próxima / do seguimento
-  useEffect(() => { const h = (e: KeyboardEvent) => { if (e.key === 'Escape') { if (teacherMode) setTeacherMode(false); else if (cosmosOpen) setCosmosOpen(false); else if (searchOpen) setSearchOpen(false); else if (compareOpen) { setCompareOpen(false); setInfoOpen(true) } else if (closeUp) { setCloseUp(null); setSelectedMoon(null) } else if (followName) setFollowName(null); else if (deepSpaceMode && nebulaFocus) setNebulaFocus(null); else if (deepSpaceMode) { setDeepSpaceMode(false); setInfoOpen(true) } } }; window.addEventListener('keydown', h); return () => window.removeEventListener('keydown', h) }, [closeUp, compareOpen, cosmosOpen, deepSpaceMode, followName, nebulaFocus, searchOpen, teacherMode])
+  useEffect(() => { const h = (e: KeyboardEvent) => { if (e.key === 'Escape') { if (teacherMode) setTeacherMode(false); else if (moreToolsOpen) setMoreToolsOpen(false); else if (cosmosOpen) setCosmosOpen(false); else if (searchOpen) setSearchOpen(false); else if (compareOpen) { setCompareOpen(false); setInfoOpen(true) } else if (closeUp) { setCloseUp(null); setSelectedMoon(null) } else if (followName) setFollowName(null); else if (deepSpaceMode && nebulaFocus) setNebulaFocus(null); else if (deepSpaceMode) { setDeepSpaceMode(false); setInfoOpen(true) } } }; window.addEventListener('keydown', h); return () => window.removeEventListener('keydown', h) }, [closeUp, compareOpen, cosmosOpen, deepSpaceMode, followName, moreToolsOpen, nebulaFocus, searchOpen, teacherMode])
   useEffect(() => {
     const handleSearchShortcut = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
@@ -1484,21 +1485,18 @@ export default function SolarSystemExplorer() {
       </section>}
 
       <aside className="left-rail">
-        <button className={`rail-button ${searchOpen ? 'active' : ''}`} aria-pressed={searchOpen} aria-label="Abrir busca" onClick={() => { setSearchOpen(!searchOpen); setLayers(false); setHand(false); setSimulationOpen(false); setGuidedOpen(false); setCompareOpen(false); setCosmosOpen(false); setDeepSpaceMode(false); setNebulaFocus(null); setInfoOpen(true) }}><Search size={17} /><span>BUSCA</span></button>
-        <button className={`rail-button ${layers ? 'active' : ''}`} aria-pressed={layers} onClick={() => { setLayers(!layers); setSearchOpen(false); setHand(false); setSimulationOpen(false); setGuidedOpen(false); setCompareOpen(false); setCosmosOpen(false); setDeepSpaceMode(false); setNebulaFocus(null); setInfoOpen(true) }}><Layers3 size={17} /><span>CAMADAS</span></button>
-        <button className={`rail-button ${simulationOpen ? 'active' : ''}`} aria-pressed={simulationOpen} onClick={() => { setSimulationOpen(!simulationOpen); setSearchOpen(false); setLayers(false); setHand(false); setGuidedOpen(false); setCompareOpen(false); setCosmosOpen(false); setDeepSpaceMode(false); setNebulaFocus(null); setInfoOpen(true) }}><Orbit size={17} /><span>TEMPO</span></button>
-        <button className={`rail-button ${guidedOpen ? 'active' : ''}`} aria-pressed={guidedOpen} onClick={() => { setGuidedOpen(!guidedOpen); setSearchOpen(false); setLayers(false); setHand(false); setSimulationOpen(false); setCompareOpen(false); setCosmosOpen(false); setDeepSpaceMode(false); setNebulaFocus(null); setInfoOpen(true) }}><Compass size={17} /><span>GUIA</span></button>
-        <button className={`rail-button ${cosmosOpen ? 'active' : ''}`} aria-pressed={cosmosOpen} onClick={toggleCosmos}><Telescope size={17} /><span>COSMOS</span></button>
-        <button className={`rail-button ${compareOpen ? 'active' : ''}`} aria-pressed={compareOpen} aria-label="Comparar objetos" onClick={() => { const opening = !compareOpen; setCompareOpen(opening); setInfoOpen(!opening); setSearchOpen(false); setLayers(false); setHand(false); setSimulationOpen(false); setGuidedOpen(false); setCosmosOpen(false); setDeepSpaceMode(false); setNebulaFocus(null) }}><GitCompareArrows size={17} /><span>COMPARAR</span></button>
-        <button className={`rail-button ${hand ? 'active' : ''}`} aria-pressed={hand} onClick={() => { setHand(!hand); setSearchOpen(false); setLayers(false); setSimulationOpen(false); setGuidedOpen(false); setCompareOpen(false); setCosmosOpen(false); setDeepSpaceMode(false); setNebulaFocus(null); setInfoOpen(true) }}><Hand size={17} /><span>GESTOS</span></button>
-        <div className="rail-bottom">
-          <button
-            className="rail-button"
-            onClick={toggleCamera}
-          >
-            <Camera size={17} />
-            <span>CÂMERA</span>
-          </button>
+        <button className={`rail-button ${searchOpen ? 'active' : ''}`} aria-pressed={searchOpen} aria-label="Abrir busca" onClick={() => { setMoreToolsOpen(false); setSearchOpen(!searchOpen); setLayers(false); setHand(false); setSimulationOpen(false); setGuidedOpen(false); setCompareOpen(false); setCosmosOpen(false); setDeepSpaceMode(false); setNebulaFocus(null); setInfoOpen(true) }}><Search size={17} /><span>BUSCA</span></button>
+        <button className={`rail-button ${layers ? 'active' : ''}`} aria-pressed={layers} onClick={() => { setMoreToolsOpen(false); setLayers(!layers); setSearchOpen(false); setHand(false); setSimulationOpen(false); setGuidedOpen(false); setCompareOpen(false); setCosmosOpen(false); setDeepSpaceMode(false); setNebulaFocus(null); setInfoOpen(true) }}><Layers3 size={17} /><span>CAMADAS</span></button>
+        <button className={`rail-button ${simulationOpen ? 'active' : ''}`} aria-pressed={simulationOpen} onClick={() => { setMoreToolsOpen(false); setSimulationOpen(!simulationOpen); setSearchOpen(false); setLayers(false); setHand(false); setGuidedOpen(false); setCompareOpen(false); setCosmosOpen(false); setDeepSpaceMode(false); setNebulaFocus(null); setInfoOpen(true) }}><Orbit size={17} /><span>TEMPO</span></button>
+        <button className={`rail-button ${guidedOpen ? 'active' : ''}`} aria-pressed={guidedOpen} onClick={() => { setMoreToolsOpen(false); setGuidedOpen(!guidedOpen); setSearchOpen(false); setLayers(false); setHand(false); setSimulationOpen(false); setCompareOpen(false); setCosmosOpen(false); setDeepSpaceMode(false); setNebulaFocus(null); setInfoOpen(true) }}><Compass size={17} /><span>GUIA</span></button>
+        <div className="rail-more">
+          <button className={`rail-button ${moreToolsOpen || cosmosOpen || compareOpen || hand ? 'active' : ''}`} aria-expanded={moreToolsOpen} aria-haspopup="menu" aria-label="Mais ferramentas" onClick={() => setMoreToolsOpen(!moreToolsOpen)}><MoreHorizontal size={18} /><span>MAIS</span></button>
+          {moreToolsOpen && <div className="rail-more-menu" role="menu" aria-label="Mais ferramentas">
+            <button role="menuitem" className={cosmosOpen ? 'active' : ''} onClick={() => { setMoreToolsOpen(false); toggleCosmos() }}><Telescope size={16} /> Cosmos</button>
+            <button role="menuitem" className={compareOpen ? 'active' : ''} onClick={() => { const opening = !compareOpen; setMoreToolsOpen(false); setCompareOpen(opening); setInfoOpen(!opening); setSearchOpen(false); setLayers(false); setHand(false); setSimulationOpen(false); setGuidedOpen(false); setCosmosOpen(false); setDeepSpaceMode(false); setNebulaFocus(null) }}><GitCompareArrows size={16} /> Comparar</button>
+            <button role="menuitem" className={hand ? 'active' : ''} onClick={() => { setMoreToolsOpen(false); setHand(!hand); setSearchOpen(false); setLayers(false); setSimulationOpen(false); setGuidedOpen(false); setCompareOpen(false); setCosmosOpen(false); setDeepSpaceMode(false); setNebulaFocus(null); setInfoOpen(true) }}><Hand size={16} /> Gestos</button>
+            <button role="menuitem" onClick={() => { setMoreToolsOpen(false); toggleCamera() }}><Camera size={16} /> Câmera</button>
+          </div>}
         </div>
         {searchOpen && <section className="search-panel" aria-label="Buscar planetas e luas">
           <div className="search-panel-heading">
@@ -1708,27 +1706,6 @@ export default function SolarSystemExplorer() {
           </div>
         </div>
 
-        <div className="view-control">
-          <button
-            className={showOrbits ? 'selected' : ''}
-            aria-pressed={showOrbits}
-            onClick={() => setShowOrbits(!showOrbits)}
-          >
-            <Orbit size={14} />
-            ÓRBITAS
-          </button>
-
-          <button
-            className={belt ? 'selected' : ''}
-            aria-pressed={belt}
-            onClick={() => setBelt(!belt)}
-          >
-            <span className="mini-dot" />
-            ASTEROIDES
-          </button>
-          <button className={kuiperBelt ? 'selected' : ''} aria-pressed={kuiperBelt} onClick={() => setKuiperBelt(!kuiperBelt)}><Orbit size={14} /> KUIPER</button>
-          <button className={comets ? 'selected' : ''} aria-pressed={comets} onClick={() => setComets(!comets)}><SparklesIcon size={14} /> COMETAS</button>
-        </div>
       </section>}
 
       {layers && (
