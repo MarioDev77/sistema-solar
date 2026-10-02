@@ -248,15 +248,33 @@ export default function SolarSystemExplorer() {
       </header>
 
       {teacherMode && <section className="teacher-toolbar" aria-label="Controles do modo professor">
-        <div className="teacher-toolbar-title"><Presentation size={15} /><span>MODO PROFESSOR</span><small>{playing ? 'SIMULAÇÃO ATIVA' : 'SIMULAÇÃO PAUSADA'}</small></div>
-        <button onClick={() => setPlaying(!playing)} aria-label={playing ? 'Pausar simulação' : 'Iniciar simulação'}>{playing ? <Pause size={15} /> : <Play size={15} />}{playing ? 'PAUSAR' : 'INICIAR'}</button>
-        <button className={showOrbits ? 'selected' : ''} aria-pressed={showOrbits} onClick={() => setShowOrbits(!showOrbits)}><Orbit size={14} /> ÓRBITAS</button>
-        <button className={showLabels ? 'selected' : ''} aria-pressed={showLabels} onClick={() => setShowLabels(!showLabels)}>{showLabels ? <Check size={14} /> : <X size={14} />} NOMES</button>
-        <button className={belt ? 'selected' : ''} aria-pressed={belt} onClick={() => setBelt(!belt)}><span className="mini-dot" /> CINTURÃO</button>
-        <button className={kuiperBelt ? 'selected' : ''} aria-pressed={kuiperBelt} onClick={() => setKuiperBelt(!kuiperBelt)}><span className="mini-dot" /> KUIPER</button>
-        <button className={comets ? 'selected' : ''} aria-pressed={comets} onClick={() => setComets(!comets)}><Orbit size={14} /> COMETAS</button>
-        <button className={infoOpen ? 'selected' : ''} aria-pressed={infoOpen} onClick={() => setInfoOpen(!infoOpen)}><BookOpen size={14} /> DADOS</button>
-        <button className={formulasOpen ? 'selected' : ''} aria-pressed={formulasOpen} onClick={() => setFormulasOpen(!formulasOpen)}><Sigma size={14} /> FÓRMULAS</button>
+        <div className="tt-brand">
+          <strong><Presentation size={15} /> MODO PROFESSOR</strong>
+          <small className={playing ? 'is-live' : ''}><span className="tt-dot" />{playing ? 'SIMULAÇÃO ATIVA' : 'SIMULAÇÃO PAUSADA'}</small>
+        </div>
+        <div className="tt-group" role="group" aria-label="Simulação">
+          <span className="tt-label">SIMULAÇÃO</span>
+          <div className="tt-row">
+            <button className={playing ? '' : 'selected'} onClick={() => setPlaying(!playing)} aria-label={playing ? 'Pausar simulação' : 'Iniciar simulação'}>{playing ? <Pause size={15} /> : <Play size={15} />}{playing ? 'PAUSAR' : 'INICIAR'}</button>
+          </div>
+        </div>
+        <div className="tt-group" role="group" aria-label="Mostrar na cena">
+          <span className="tt-label">MOSTRAR NA CENA</span>
+          <div className="tt-row">
+            <button className={showOrbits ? 'selected' : ''} aria-pressed={showOrbits} onClick={() => setShowOrbits(!showOrbits)}><Orbit size={14} /> ÓRBITAS</button>
+            <button className={showLabels ? 'selected' : ''} aria-pressed={showLabels} onClick={() => setShowLabels(!showLabels)}>{showLabels ? <Check size={14} /> : <X size={14} />} NOMES</button>
+            <button className={belt ? 'selected' : ''} aria-pressed={belt} onClick={() => setBelt(!belt)}><span className="mini-dot" /> CINTURÃO</button>
+            <button className={kuiperBelt ? 'selected' : ''} aria-pressed={kuiperBelt} onClick={() => setKuiperBelt(!kuiperBelt)}><span className="mini-dot" /> KUIPER</button>
+            <button className={comets ? 'selected' : ''} aria-pressed={comets} onClick={() => setComets(!comets)}><Orbit size={14} /> COMETAS</button>
+          </div>
+        </div>
+        <div className="tt-group" role="group" aria-label="Painéis">
+          <span className="tt-label">PAINÉIS</span>
+          <div className="tt-row">
+            <button className={infoOpen ? 'selected' : ''} aria-pressed={infoOpen} onClick={() => setInfoOpen(!infoOpen)}><BookOpen size={14} /> DADOS</button>
+            <button className={`tt-primary ${formulasOpen ? 'selected' : ''}`} aria-pressed={formulasOpen} onClick={() => setFormulasOpen(!formulasOpen)}><Sigma size={14} /> FÓRMULAS</button>
+          </div>
+        </div>
         <button className="teacher-exit" onClick={toggleTeacherMode}>ENCERRAR <X size={14} /></button>
       </section>}
       {teacherMode && formulasOpen && <FormulasPanel planet={selected} onClose={() => setFormulasOpen(false)} />}
