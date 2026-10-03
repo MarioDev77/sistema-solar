@@ -15,6 +15,9 @@ import { CloseUpBar } from './solar/panels/closeup-bar'
 import { SimulationPanel } from './solar/panels/simulation-panel'
 import { LayersPanel } from './solar/panels/layers-panel'
 import { HandPanel } from './solar/panels/hand-panel'
+import { useHandTracking } from './solar/hand/use-hand-tracking'
+import { HandOverlay } from './solar/hand/hand-overlay'
+import { HandHud } from './solar/hand/hand-hud'
 import { GuidePanel } from './solar/panels/guide-panel'
 import { NebulaCard } from './solar/panels/nebula-card'
 import { FormulasPanel } from './solar/panels/formulas-panel'
@@ -35,7 +38,7 @@ export default function SolarSystemExplorer() {
   const [speed, setSpeed] = useState(1000)
   const [query, setQuery] = useState('')
   const [hand, setHand] = useState(false)
-  const [cameraActive, setCameraActive] = useState(false)
+  const handTracking = useHandTracking()
   const [layers, setLayers] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [simulationOpen, setSimulationOpen] = useState(false)
@@ -63,7 +66,6 @@ export default function SolarSystemExplorer() {
   const [followName, setFollowName] = useState<string | null>(null)
   const [closeUp, setCloseUp] = useState<string | null>(null)
   const clock = useRef<SimClock>({ t: SIM_T0, speed: 1000, playing: true })
-  const streamRef = useRef<MediaStream | null>(null)
   const keyActions = useRef({ previous: () => {}, next: () => {}, planetsEnabled: true })
   const urlSynced = useRef(false)
   const [ready, setReady] = useState(false)
@@ -123,8 +125,6 @@ export default function SolarSystemExplorer() {
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [])
-  // libera a câmera ao sair da página
-  useEffect(() => () => { streamRef.current?.getTracks().forEach(t => t.stop()) }, [])
   const searchResults = catalogObjects.filter((item) => {
     const normalize = (value: string) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('pt-BR')
     return normalize(item.name).includes(normalize(query.trim()))
@@ -181,10 +181,6 @@ export default function SolarSystemExplorer() {
     setCloseUp(null)
   }
   keyActions.current = { previous: () => changeSelectedPlanet(-1), next: () => changeSelectedPlanet(1), planetsEnabled: !deepSpaceMode && !teacherMode }
-  const toggleCamera = async () => {
-    if (cameraActive) { streamRef.current?.getTracks().forEach(t => t.stop()); streamRef.current = null; setCameraActive(false); return }
-    try { streamRef.current = await navigator.mediaDevices.getUserMedia({ video: true }); setCameraActive(true) } catch { setCameraActive(false) }
-  }
   const toggleFullscreen = async () => {
     try {
       if (document.fullscreenElement) {
@@ -206,7 +202,7 @@ export default function SolarSystemExplorer() {
   const showPlanetToggle = !infoOpen && !deepSpaceMode && !teacherMode && !compareOpen
   const showNebulaToggle = !!focusedNebula && !nebulaCardOpen && deepSpaceMode && !cosmosOpen && !teacherMode
   return (
-    <main className={`explorer ${closeUp ? 'is-closeup' : ''} ${teacherMode ? 'teacher-mode' : ''} ${teacherMode && formulasOpen ? 'formulas-open' : ''} ${deepSpaceMode ? 'deep-space-mode' : ''}`}>
+    <main className={`explorer ${closeUp ? 'is-closeup' : ''} ${teacherMode ? 'teacher-mode' : ''} ${teacherMode && formulasOpen ? 'formulas-open' : ''} ${deepSpaceMode ? 'deep-space-mode' : ''} ${handTracking.status.enabled ? 'hand-on' : ''}`}>
       {!ready && <LoadingScreen onDone={() => setReady(true)} />}
       <div className="scene">
         <Scene selected={selected.name} showLabels={showLabels} followName={followName} closeUp={closeUp}
@@ -214,6 +210,9 @@ export default function SolarSystemExplorer() {
           onMoonSelect={(moon, planet) => { setSelected(planet); setSelectedMoon({ moon, planet }); setInfoOpen(true); setFollowName(null); setCloseUp(planet.name) }}
           showOrbits={showOrbits} belt={belt} kuiperBelt={kuiperBelt} comets={comets} deepSpaceMode={deepSpaceMode} nebulaFocus={nebulaFocus} onNebulaSelect={selectNebula} clock={clock} onFollowEnd={() => setFollowName(null)} />
       </div>
+
+      <HandOverlay controller={handTracking.controller} show={handTracking.settings.showLandmarks} />
+      <HandHud status={handTracking.status} selectedName={selectedMoon?.moon.name ?? selected.name} playing={playing} />
 
       <header className="topbar">
         <div className="brand">
@@ -290,7 +289,7 @@ export default function SolarSystemExplorer() {
             <button role="menuitem" className={cosmosOpen ? 'active' : ''} onClick={() => { setMoreToolsOpen(false); toggleCosmos() }}><Telescope size={16} /> Cosmos</button>
             <button role="menuitem" className={compareOpen ? 'active' : ''} onClick={() => { const opening = !compareOpen; setMoreToolsOpen(false); setCompareOpen(opening); setInfoOpen(!opening); setSearchOpen(false); setLayers(false); setHand(false); setSimulationOpen(false); setGuidedOpen(false); setCosmosOpen(false); setDeepSpaceMode(false); setNebulaFocus(null) }}><GitCompareArrows size={16} /> Comparar</button>
             <button role="menuitem" className={hand ? 'active' : ''} onClick={() => { setMoreToolsOpen(false); setHand(!hand); setSearchOpen(false); setLayers(false); setSimulationOpen(false); setGuidedOpen(false); setCompareOpen(false); setCosmosOpen(false); setDeepSpaceMode(false); setNebulaFocus(null); setInfoOpen(true) }}><Hand size={16} /> Gestos</button>
-            <button role="menuitem" onClick={() => { setMoreToolsOpen(false); toggleCamera() }}><Camera size={16} /> Câmera</button>
+            <button role="menuitem" onClick={() => { setMoreToolsOpen(false); handTracking.toggle() }}><Camera size={16} /> {handTracking.status.enabled ? 'Desligar câmera' : 'Ligar câmera'}</button>
           </div>}
         </div>
         {searchOpen && <section className="search-panel" aria-label="Buscar planetas e luas">
@@ -348,7 +347,7 @@ export default function SolarSystemExplorer() {
 
       {layers && <LayersPanel showOrbits={showOrbits} belt={belt} kuiperBelt={kuiperBelt} comets={comets} setShowOrbits={setShowOrbits} setBelt={setBelt} setKuiperBelt={setKuiperBelt} setComets={setComets} />}
 
-      {hand && <HandPanel cameraActive={cameraActive} toggleCamera={toggleCamera} setHand={setHand} />}
+      {hand && <HandPanel status={handTracking.status} settings={handTracking.settings} onToggle={handTracking.toggle} onRecalibrate={handTracking.recalibrate} onSelectDevice={handTracking.selectDevice} onSettings={handTracking.updateSettings} onClose={() => setHand(false)} />}
 
       {guidedOpen && <GuidePanel selected={selected} playing={playing} guideTab={guideTab} lessonIndex={lessonIndex} lessonStep={lessonStep} lessonChoice={lessonChoice} lessonRevealed={lessonRevealed} experimentDistance={experimentDistance} experimentMass={experimentMass} experimentPlaying={experimentPlaying} lesson={lesson} lessonPlanet={lessonPlanet} chooseLesson={chooseLesson} setSelected={setSelected} setSelectedMoon={setSelectedMoon} setInfoOpen={setInfoOpen} setPlaying={setPlaying} setGuidedOpen={setGuidedOpen} setGuideTab={setGuideTab} setLessonStep={setLessonStep} setLessonChoice={setLessonChoice} setLessonRevealed={setLessonRevealed} setExperimentDistance={setExperimentDistance} setExperimentMass={setExperimentMass} setExperimentPlaying={setExperimentPlaying} setFollowName={setFollowName} setCloseUp={setCloseUp} />}
 
