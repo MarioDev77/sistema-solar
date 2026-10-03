@@ -71,6 +71,23 @@ export default function SolarSystemExplorer() {
   const [ready, setReady] = useState(false)
   // velocidade e play/pausa vão para o relógio por ref: mudar isso NÃO re-renderiza a cena por frame
   useEffect(() => { clock.current.speed = speed; clock.current.playing = playing }, [speed, playing])
+  // palma aberta estável (~1 s) pausa/retoma a simulação; só vale com o modo holográfico engajado
+  const playingRef = useRef(playing)
+  useEffect(() => { playingRef.current = playing }, [playing])
+  useEffect(() => {
+    const controller = handTracking.controller
+    if (!controller) return
+    return controller.subscribeGestures((g) => {
+      if (!g.engaged) return
+      for (const e of g.events) {
+        if (e.type !== 'palm-toggle') continue
+        const next = !playingRef.current
+        playingRef.current = next
+        setPlaying(next)
+        controller.notify(next ? 'SIMULAÇÃO RETOMADA' : 'SIMULAÇÃO PAUSADA')
+      }
+    })
+  }, [handTracking.controller])
   // depois que a cena abriu, as texturas das luas chegam em segundo plano (sem competir com a abertura)
   useEffect(() => { if (ready) preloadMoonTexturesIdle() }, [ready])
   // Esc sai da vista próxima / do seguimento
@@ -208,7 +225,7 @@ export default function SolarSystemExplorer() {
         <Scene selected={selected.name} showLabels={showLabels} followName={followName} closeUp={closeUp}
           onSelect={(p) => { setSelected(p); setSelectedMoon(null); setInfoOpen(true); setFollowName(null); setCloseUp(p.name) }}
           onMoonSelect={(moon, planet) => { setSelected(planet); setSelectedMoon({ moon, planet }); setInfoOpen(true); setFollowName(null); setCloseUp(planet.name) }}
-          showOrbits={showOrbits} belt={belt} kuiperBelt={kuiperBelt} comets={comets} deepSpaceMode={deepSpaceMode} nebulaFocus={nebulaFocus} onNebulaSelect={selectNebula} clock={clock} onFollowEnd={() => setFollowName(null)} />
+          showOrbits={showOrbits} belt={belt} kuiperBelt={kuiperBelt} comets={comets} deepSpaceMode={deepSpaceMode} nebulaFocus={nebulaFocus} onNebulaSelect={selectNebula} clock={clock} onFollowEnd={() => setFollowName(null)} handController={handTracking.controller} />
       </div>
 
       <HandOverlay controller={handTracking.controller} show={handTracking.settings.showLandmarks} />
@@ -347,7 +364,7 @@ export default function SolarSystemExplorer() {
 
       {layers && <LayersPanel showOrbits={showOrbits} belt={belt} kuiperBelt={kuiperBelt} comets={comets} setShowOrbits={setShowOrbits} setBelt={setBelt} setKuiperBelt={setKuiperBelt} setComets={setComets} />}
 
-      {hand && <HandPanel status={handTracking.status} settings={handTracking.settings} onToggle={handTracking.toggle} onRecalibrate={handTracking.recalibrate} onSelectDevice={handTracking.selectDevice} onSettings={handTracking.updateSettings} onClose={() => setHand(false)} />}
+      {hand && <HandPanel status={handTracking.status} settings={handTracking.settings} onToggle={handTracking.toggle} onRecalibrate={handTracking.recalibrate} onDisengage={handTracking.disengage} onSelectDevice={handTracking.selectDevice} onSettings={handTracking.updateSettings} onClose={() => setHand(false)} />}
 
       {guidedOpen && <GuidePanel selected={selected} playing={playing} guideTab={guideTab} lessonIndex={lessonIndex} lessonStep={lessonStep} lessonChoice={lessonChoice} lessonRevealed={lessonRevealed} experimentDistance={experimentDistance} experimentMass={experimentMass} experimentPlaying={experimentPlaying} lesson={lesson} lessonPlanet={lessonPlanet} chooseLesson={chooseLesson} setSelected={setSelected} setSelectedMoon={setSelectedMoon} setInfoOpen={setInfoOpen} setPlaying={setPlaying} setGuidedOpen={setGuidedOpen} setGuideTab={setGuideTab} setLessonStep={setLessonStep} setLessonChoice={setLessonChoice} setLessonRevealed={setLessonRevealed} setExperimentDistance={setExperimentDistance} setExperimentMass={setExperimentMass} setExperimentPlaying={setExperimentPlaying} setFollowName={setFollowName} setCloseUp={setCloseUp} />}
 

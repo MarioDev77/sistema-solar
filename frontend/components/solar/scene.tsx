@@ -9,6 +9,8 @@ import { Sun } from './bodies'
 import { CameraRig, DeepSpaceCameraRig, MAX_DIST, MIN_DIST, type OrbitControlsRef } from './camera'
 import { SimClock, SimulationClock } from './clock'
 import { CosmosObject, cosmosObjects, MoonData, PlanetData, planets } from './data'
+import { HandCameraBridge } from './hand/hand-camera-bridge'
+import type { HandTrackingController } from './hand/hand-tracking-controller'
 import { DeepSpaceNebula } from './nebula'
 import { Planet } from './planet-system'
 import { TextureWarmup } from './texture-warmup'
@@ -30,6 +32,7 @@ export function Scene({
   onNebulaSelect,
   clock,
   onFollowEnd,
+  handController = null,
 }: {
   selected: string
   showLabels: boolean
@@ -46,6 +49,7 @@ export function Scene({
   onNebulaSelect: (object: CosmosObject) => void
   clock: RefObject<SimClock>
   onFollowEnd: () => void
+  handController?: HandTrackingController | null
 }) {
   const controlsRef = useRef<OrbitControlsRef>(null)
   const planetRefs = useRef<Record<string, THREE.Group>>({})
@@ -152,6 +156,7 @@ export function Scene({
         onFollowEnd={onFollowEnd}
         enabled={!deepSpaceMode}
       />
+      <HandCameraBridge controller={handController} controlsRef={controlsRef} planetRefs={planetRefs} />
       <DeepSpaceCameraRig enabled={deepSpaceMode} focusName={nebulaFocus} nebulaRefs={nebulaRefs} controlsRef={controlsRef} />
     </Canvas>
   )

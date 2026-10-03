@@ -54,10 +54,11 @@ export function useHandTracking() {
   const disable = useCallback(() => { controller?.disable() }, [controller])
   const toggle = useCallback(() => { void controller?.toggle() }, [controller])
   const recalibrate = useCallback(() => { controller?.recalibrate() }, [controller])
+  const disengage = useCallback(() => { controller?.disengage() }, [controller])
   const selectDevice = useCallback((id: string) => {
     try { window.localStorage.setItem(DEVICE_KEY, id) } catch { /* sem storage */ }
     void controller?.selectDevice(id)
   }, [controller])
 
-  return { controller, status, settings, enable, disable, toggle, recalibrate, selectDevice, updateSettings }
+  return { controller, status, settings, enable, disable, toggle, recalibrate, disengage, selectDevice, updateSettings }
 }

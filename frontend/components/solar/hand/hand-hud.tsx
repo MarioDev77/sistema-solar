@@ -18,6 +18,7 @@ function Row({ label, value, tone }: { label: string; value: string; tone?: Tone
 export function HandHud({ status, selectedName, playing }: { status: TrackingStatus; selectedName: string; playing: boolean }) {
   const [showDone, setShowDone] = useState(false)
   const [errorVisible, setErrorVisible] = useState(false)
+  const [noticeId, setNoticeId] = useState<number | null>(null)
   const error = status.cameraError ?? status.modelError
 
   useEffect(() => {
@@ -26,6 +27,14 @@ export function HandHud({ status, selectedName, playing }: { status: TrackingSta
     const id = window.setTimeout(() => setShowDone(false), 2600)
     return () => window.clearTimeout(id)
   }, [status.calibratedAt])
+
+  useEffect(() => {
+    const id = status.notice?.id ?? null
+    if (id === null) { setNoticeId(null); return }
+    setNoticeId(id)
+    const timer = window.setTimeout(() => setNoticeId((cur) => (cur === id ? null : cur)), 2400)
+    return () => window.clearTimeout(timer)
+  }, [status.notice?.id])
 
   useEffect(() => {
     if (!error) { setErrorVisible(false); return }
@@ -38,6 +47,7 @@ export function HandHud({ status, selectedName, playing }: { status: TrackingSta
   const cameraLabel = { off: 'OFF', requesting: 'REQUESTING', connected: 'CONNECTED', error: 'ERROR' }[status.camera]
   const trackingLabel = !status.enabled ? 'OFF' : status.phase === 'loading' ? 'LOADING' : status.phase === 'ready' ? 'ACTIVE' : 'CALIBRATING'
   const trackingTone: Tone = !status.enabled ? 'off' : status.phase === 'ready' ? 'ok' : 'warn'
+  const trackingLabelHolo = status.holoActive && status.phase === 'ready' ? 'HOLO' : trackingLabel
   const handsLabel = status.hands === 0 ? 'NONE' : `${status.hands} DETECTED`
 
   const calibrating = status.enabled && (status.phase === 'waiting' || status.phase === 'calibrating')
@@ -47,7 +57,7 @@ export function HandHud({ status, selectedName, playing }: { status: TrackingSta
       {status.enabled && (
         <section className="hand-hud" aria-label="Status do rastreamento de mãos">
           <Row label="CAMERA" value={cameraLabel} tone={cameraTone} />
-          <Row label="HAND TRACKING" value={trackingLabel} tone={trackingTone} />
+          <Row label="HAND TRACKING" value={trackingLabelHolo} tone={trackingTone} />
           <Row label="HANDS" value={handsLabel} tone={status.hands > 0 ? 'ok' : 'off'} />
           <Row label="GESTURE" value={status.gesture} />
           <Row label="SELECTED OBJECT" value={selectedName.toUpperCase()} />
@@ -75,6 +85,12 @@ export function HandHud({ status, selectedName, playing }: { status: TrackingSta
         <div className="hand-banner done" role="status">
           <strong>CALIBRAÇÃO CONCLUÍDA</strong>
           {status.stability !== null && <span>Estabilidade do rastreamento: {Math.round(status.stability * 100)}%</span>}
+        </div>
+      )}
+
+      {status.enabled && status.notice && noticeId === status.notice.id && (
+        <div className="hand-banner notice" role="status" key={status.notice.id}>
+          <strong>{status.notice.text}</strong>
         </div>
       )}
 

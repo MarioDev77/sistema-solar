@@ -9,6 +9,7 @@ type Props = {
   settings: HandSettings
   onToggle: () => void
   onRecalibrate: () => void
+  onDisengage: () => void
   onSelectDevice: (id: string) => void
   onSettings: (partial: Partial<HandSettings>) => void
   onClose: () => void
@@ -22,7 +23,7 @@ const PHASE_TEXT: Record<TrackingStatus['phase'], string> = {
   ready: 'RASTREAMENTO ATIVO',
 }
 
-export function HandPanel({ status, settings, onToggle, onRecalibrate, onSelectDevice, onSettings, onClose }: Props) {
+export function HandPanel({ status, settings, onToggle, onRecalibrate, onDisengage, onSelectDevice, onSettings, onClose }: Props) {
   const videoRef = useRef<HTMLVideoElement | null>(null)
   useEffect(() => {
     const video = videoRef.current
@@ -70,6 +71,24 @@ export function HandPanel({ status, settings, onToggle, onRecalibrate, onSelectD
         <RefreshCw size={15} />
         RECALIBRAR
       </button>
+
+      {status.holoActive && (
+        <button className="travel-button secondary" onClick={onDisengage}>
+          <Power size={15} />
+          ENCERRAR CONTROLE HOLOGRÁFICO
+        </button>
+      )}
+
+      <details className="hand-help">
+        <summary>COMO USAR OS GESTOS</summary>
+        <ol>
+          <li><b>Ativar:</b> forme o losango com as duas mãos (pontas dos polegares juntas e dos indicadores juntas) por meio segundo.</li>
+          <li><b>Girar e inclinar:</b> mantenha o losango e mova as mãos juntas.</li>
+          <li><b>Zoom:</b> duas mãos abertas; afastar aproxima, aproximar afasta.</li>
+          <li><b>Girar a cena:</b> círculo com as duas mãos; quanto mais rápido, mais rápida a rotação.</li>
+          <li><b>Pausar/retomar:</b> uma palma aberta e parada por 1 segundo.</li>
+        </ol>
+      </details>
 
       {status.devices.length > 1 && (
         <label className="hand-field">

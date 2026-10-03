@@ -3,6 +3,8 @@ import { CameraController, describeCameraError } from './camera-controller'
 import { HandCalibration } from './hand-calibration'
 import { palmCenter } from './hand-geometry'
 import { GestureSmoother } from './gesture-smoother'
+import { GestureRecognizer } from './gesture-recognizer'
+import type { GestureEvent, GestureFrame } from './gesture-types'
 import type { HandCalibrationResult, HandFrame, HandSettings, Landmark, TrackedHand, TrackingStatus } from './types'
 
 // Carregados em runtime (só quando o controle por mãos é ligado): nada disso entra no zip nem no bundle.
@@ -21,21 +23,23 @@ export const DEFAULT_SETTINGS: HandSettings = { mirror: true, showLandmarks: tru
 export const INITIAL_STATUS: TrackingStatus = {
   enabled: false, camera: 'off', cameraError: null, model: 'idle', modelError: null, phase: 'off',
   hands: 0, gesture: GESTURE_NONE, fps: 0, devices: [], deviceId: null, stream: null,
-  calibrationProgress: 0, calibrationHint: '', calibratedAt: null, stability: null,
+  calibrationProgress: 0, calibrationHint: '', calibratedAt: null, stability: null, holoActive: false, notice: null,
 }
 
 // mudanças nestas chaves chegam ao React na hora; as demais (fps, progresso) são limitadas a ~8/s
 const IMMEDIATE_KEYS = new Set<keyof TrackingStatus>([
-  'enabled', 'camera', 'cameraError', 'model', 'modelError', 'phase', 'hands', 'gesture', 'devices', 'deviceId', 'stream', 'calibratedAt',
+  'enabled', 'camera', 'cameraError', 'model', 'modelError', 'phase', 'hands', 'gesture', 'devices', 'deviceId', 'stream', 'calibratedAt', 'holoActive', 'notice',
 ])
 
 type StatusListener = (status: TrackingStatus) => void
 type FrameListener = (frame: HandFrame) => void
+type GestureListener = (frame: GestureFrame) => void
 
 /**
  * Orquestra câmera → MediaPipe → suavização → calibração e publica:
  *  - status de baixa frequência (para HUD/painel React);
- *  - frames de landmarks (para overlay e, nas próximas etapas, reconhecimento de gestos).
+ *  - frames de landmarks (para o overlay);
+ *  - frames de gestos já confirmados (GestureRecognizer), para a cena 3D e a interface holográfica.
  * Roda no PRÓPRIO laço de requestAnimationFrame, separado do Canvas 3D, e nunca causa re-render por frame.
  */
 export class HandTrackingController {
@@ -43,12 +47,15 @@ export class HandTrackingController {
   private landmarker: HandLandmarker | null = null
   private modelPromise: Promise<HandLandmarker> | null = null
   private smoother = new GestureSmoother()
+  private gestures = new GestureRecognizer()
   private calibration = new HandCalibration()
   private calibrationResult: HandCalibrationResult | null = null
   private settings: HandSettings = { ...DEFAULT_SETTINGS }
   private status: TrackingStatus = { ...INITIAL_STATUS }
   private statusListeners = new Set<StatusListener>()
   private frameListeners = new Set<FrameListener>()
+  private gestureListeners = new Set<GestureListener>()
+  private noticeId = 0
 
   private token = 0
   private destroyed = false
@@ -74,6 +81,12 @@ export class HandTrackingController {
   // ───────────── API pública ─────────────
   subscribeStatus(fn: StatusListener) { this.statusListeners.add(fn); return () => { this.statusListeners.delete(fn) } }
   subscribeFrames(fn: FrameListener) { this.frameListeners.add(fn); return () => { this.frameListeners.delete(fn) } }
+  /** Um GestureFrame por frame de rastreamento, só depois da calibração. Sem re-render do React. */
+  subscribeGestures(fn: GestureListener) { this.gestureListeners.add(fn); return () => { this.gestureListeners.delete(fn) } }
+  /** Aviso transitório no HUD (a cena usa para "PLANETA AGARRADO", "SIMULAÇÃO PAUSADA"...). */
+  notify(text: string) { this.patch({ notice: { id: ++this.noticeId, text } }) }
+  /** Encerra o modo de manipulação holográfica (a câmera segue ligada). */
+  disengage() { this.gestures.disengage(); this.patch({ holoActive: false }); this.notify('CONTROLE HOLOGRÁFICO ENCERRADO') }
   getStatus() { return this.status }
   getSettings() { return this.settings }
   getCalibration() { return this.calibrationResult }
@@ -90,7 +103,7 @@ export class HandTrackingController {
     }
     if (partial.mirror !== undefined && partial.mirror !== prev.mirror) {
       // espelhar inverte todas as coordenadas: filtros e calibração antigos deixam de valer
-      this.smoother.reset(); this.slotCenters = [null, null]
+      this.smoother.reset(); this.gestures.reset(); this.slotCenters = [null, null]
       if (this.status.enabled && this.status.phase === 'ready') this.beginCalibration()
     }
   }
@@ -121,7 +134,7 @@ export class HandTrackingController {
     }
     this.patch({ camera: 'connected', model: 'ready' })
     void this.refreshDevices()
-    this.smoother.reset(); this.slotCenters = [null, null]
+    this.smoother.reset(); this.gestures.reset(); this.slotCenters = [null, null]
     this.beginCalibration()
     this.startLoop()
   }
@@ -130,11 +143,11 @@ export class HandTrackingController {
     this.token++
     this.stopLoop()
     this.camera.stop()
-    this.smoother.reset(); this.calibration.reset(); this.calibrationResult = null
+    this.smoother.reset(); this.gestures.reset(); this.calibration.reset(); this.calibrationResult = null
     this.slotCenters = [null, null]
     this.patch({
       enabled: false, phase: 'off', camera: 'off', hands: 0, stream: null, gesture: GESTURE_NONE, fps: 0,
-      calibrationProgress: 0, calibrationHint: '', calibratedAt: null, stability: null,
+      calibrationProgress: 0, calibrationHint: '', calibratedAt: null, stability: null, holoActive: false, notice: null,
     })
     this.emitFrame({ time: performance.now(), aspect: 1, hands: [] })
   }
@@ -156,7 +169,7 @@ export class HandTrackingController {
       await this.startCamera(id)
       if (token !== this.token) return
       this.patch({ camera: 'connected' })
-      this.smoother.reset(); this.slotCenters = [null, null]
+      this.smoother.reset(); this.gestures.reset(); this.slotCenters = [null, null]
       void this.refreshDevices()
       this.beginCalibration() // enquadramento novo → calibra de novo
     } catch (error) {
@@ -169,7 +182,7 @@ export class HandTrackingController {
     this.disable()
     navigator.mediaDevices?.removeEventListener?.('devicechange', this.onDeviceChange)
     this.landmarker?.close(); this.landmarker = null
-    this.statusListeners.clear(); this.frameListeners.clear()
+    this.statusListeners.clear(); this.frameListeners.clear(); this.gestureListeners.clear()
   }
 
   // ───────────── câmera / modelo ─────────────
@@ -185,7 +198,8 @@ export class HandTrackingController {
     if (this.destroyed) return
     this.token++
     this.stopLoop(); this.camera.stop()
-    this.patch({ enabled: false, phase: 'off', camera: 'error', cameraError: message, hands: 0, stream: null, fps: 0 })
+    this.gestures.reset()
+    this.patch({ enabled: false, phase: 'off', camera: 'error', cameraError: message, hands: 0, stream: null, fps: 0, gesture: GESTURE_NONE, holoActive: false })
     this.emitFrame({ time: performance.now(), aspect: 1, hands: [] })
   }
 
@@ -221,10 +235,10 @@ export class HandTrackingController {
 
   // ───────────── calibração ─────────────
   private beginCalibration() {
-    this.calibration.reset(); this.calibrationResult = null
+    this.calibration.reset(); this.calibrationResult = null; this.gestures.reset()
     this.patch({
       phase: this.status.hands > 0 ? 'calibrating' : 'waiting', calibrationProgress: 0,
-      calibrationHint: '', calibratedAt: null, stability: null,
+      calibrationHint: '', calibratedAt: null, stability: null, holoActive: false, gesture: GESTURE_NONE,
     })
   }
 
@@ -288,6 +302,23 @@ export class HandTrackingController {
     if (t0 - this.fpsStart >= 1000) { fps = Math.round((this.fpsCount * 1000) / (t0 - this.fpsStart)); this.fpsCount = 0; this.fpsStart = t0 }
     this.patch({ hands: hands.length, fps })
     this.emitFrame(frame)
+    this.stepGestures(frame)
+  }
+
+  private stepGestures(frame: HandFrame) {
+    if (this.status.phase !== 'ready' || !this.calibrationResult) return
+    const g = this.gestures.update(frame, this.calibrationResult, this.settings.tolerance)
+    const notice = this.noticeFor(g.events)
+    this.patch({ gesture: g.label, holoActive: g.engaged, ...(notice ? { notice: { id: ++this.noticeId, text: notice } } : {}) })
+    for (const fn of this.gestureListeners) fn(g)
+  }
+
+  private noticeFor(events: GestureEvent[]): string | null {
+    for (const e of events) {
+      if (e.type === 'engage') return 'CONTROLE HOLOGRÁFICO ATIVADO'
+      if (e.type === 'disengage' && e.reason === 'timeout') return 'CONTROLE HOLOGRÁFICO ENCERRADO'
+    }
+    return null
   }
 
   /** Slot 0/1 estável: com duas mãos, a da esquerda da tela é 0; com uma, vale a mais próxima da anterior. */

@@ -69,6 +69,10 @@ export type TrackingStatus = {
   calibrationHint: string
   calibratedAt: number | null
   stability: number | null
+  /** modo de manipulação holográfica ligado (portal confirmado) */
+  holoActive: boolean
+  /** aviso transitório para o HUD (ex.: "CONTROLE HOLOGRÁFICO ATIVADO"); o id muda a cada aviso novo */
+  notice: { id: number; text: string } | null
 }
 
 /** Índices dos landmarks do MediaPipe Hands. */
