@@ -41,6 +41,7 @@ export function Planet({
   overrides?: PlanetOverrides
 }) {
   const ref = useRef<THREE.Group | null>(null)
+  const spinRef = useRef<THREE.Group | null>(null)
   const camera = useThree((state) => state.camera)
   const worldPos = useMemo(() => new THREE.Vector3(), [])
   // Texturas das luas só são baixadas quando o planeta é selecionado/observado ou a câmera chega perto.
@@ -89,6 +90,8 @@ export function Planet({
   }, [])
 
   useFrame(place, -2)
+  // giro dado pela mão (só a esfera; luas e anéis seguem a própria órbita)
+  useFrame(() => { if (spinRef.current && overrides) spinRef.current.rotation.y = overrides.spinAngle(data.name) })
 
   return (
     <>
@@ -105,6 +108,7 @@ export function Planet({
           onSelect()
         }}
       >
+        <group ref={spinRef}>
         {textures[data.key] ? (
           <Suspense
             fallback={
@@ -137,6 +141,7 @@ export function Planet({
             segments={Math.max(28, Math.round(detail * 0.7))}
           />
         )}
+        </group>
 
         {data.atmosphere && (
           <Atmosphere

@@ -64,17 +64,64 @@ const types = (c: { type: string }[]) => c.map((x) => x.type).join(',')
   check('soltar sem arrastar avisa moved=false', c.some((x) => x.type === 'release' && !x.moved) && pi.view.held === null)
 }
 
-// 3) pinça + arrastar + soltar
+// helper: simula a pinça segurada, 30 quadros/s, seguindo uma trajetória em pixels
+const grabAt = (pi: PlanetInteraction, px: number, py: number) =>
+  pi.update(frame(0, { hands: [hand(0, { pinch: 'active', pp: [px / W, py / H] })], events: [{ type: 'pinch-start', slot: 0, point: { x: px / W, y: py / H } }] }), cands, W, H, 0, true)
+const play = (pi: PlanetInteraction, path: (t: number) => [number, number], from: number, to: number) => {
+  const all: ReturnType<PlanetInteraction['update']> = []
+  for (let t = from; t <= to; t += 33) {
+    const [x, y] = path(t)
+    all.push(...pi.update(frame(t, { hands: [hand(0, { pinch: 'active', pp: [x / W, y / H] })] }), cands, W, H, t, true))
+  }
+  return all
+}
+
+// 3) pinça + arrastar em LINHA + soltar
 {
   const pi = new PlanetInteraction()
-  pi.update(frame(0, { hands: [hand(0, { pinch: 'active', pp: [0.7, 0.5] })], events: [{ type: 'pinch-start', slot: 0, point: { x: 0.7, y: 0.5 } }] }), cands, W, H, 0, true)
-  const c = pi.update(frame(100, { hands: [hand(0, { pinch: 'active', pp: [0.78, 0.4] })] }), cands, W, H, 100, true)
-  check('mover a pinça >18 px inicia o arrasto uma única vez', types(c) === 'drag-start' && pi.view.held?.moved === true)
-  check('posição da pinça é entregue em pixels', Math.abs((pi.dragPx?.x ?? 0) - 780) < 1e-6 && Math.abs((pi.dragPx?.y ?? 0) - 240) < 1e-6)
-  const again = pi.update(frame(150, { hands: [hand(0, { pinch: 'active', pp: [0.8, 0.4] })] }), cands, W, H, 150, true)
-  check('arrasto não repete drag-start', again.length === 0)
-  const rel = pi.update(frame(300, { hands: [hand(0, { pinch: 'idle' })], events: [{ type: 'pinch-end', slot: 0 }] }), cands, W, H, 300, true)
+  grabAt(pi, 700, 300)
+  let c = play(pi, (t) => [700 + t * 0.3, 300 - t * 0.1], 33, 200)
+  check('movimento ainda sendo classificado: não arrasta nos primeiros ~300 ms', !c.some((x) => x.type === 'drag-start') && pi.view.held?.moved === false)
+  c = play(pi, (t) => [700 + t * 0.3, 300 - t * 0.1], 233, 500)
+  check('movimento em linha vira arrasto (uma única vez)', c.filter((x) => x.type === 'drag-start').length === 1 && pi.view.held?.moved === true && !pi.view.held.rotating)
+  check('posição da pinça é entregue em pixels', Math.abs((pi.dragPx?.x ?? 0) - (700 + 495 * 0.3)) < 25)
+  const rel = pi.update(frame(600, { hands: [hand(0, { pinch: 'idle' })], events: [{ type: 'pinch-end', slot: 0 }] }), cands, W, H, 600, true)
   check('soltar depois de arrastar avisa moved=true', rel.some((x) => x.type === 'release' && x.moved))
+}
+
+// 3b) pinça + CÍRCULO = girar o planeta (sem arrastar)
+{
+  const circle = (dir: 1 | -1, period: number) => (t: number): [number, number] => [700 + 45 * Math.cos(dir * (t / period) * 2 * Math.PI), 300 + 45 * Math.sin(dir * (t / period) * 2 * Math.PI)]
+  const cw = new PlanetInteraction()
+  grabAt(cw, 700, 300)
+  let c = play(cw, circle(1, 1200), 33, 1500)
+  check('círculo com a pinça vira rotação, não arrasto', c.some((x) => x.type === 'rotate-start') && !c.some((x) => x.type === 'drag-start') && cw.view.held?.rotating === true && !cw.view.held.moved)
+  check('sentido horário na tela → omega positivo', cw.view.held!.omega > 1, `omega=${cw.view.held!.omega.toFixed(2)}`)
+  const ccw = new PlanetInteraction()
+  grabAt(ccw, 700, 300)
+  play(ccw, circle(-1, 1200), 33, 1500)
+  check('sentido anti-horário → omega negativo', ccw.view.held!.omega < -1, `omega=${ccw.view.held!.omega.toFixed(2)}`)
+  const slow = new PlanetInteraction(), fast = new PlanetInteraction()
+  grabAt(slow, 700, 300); grabAt(fast, 700, 300)
+  play(slow, circle(1, 2400), 33, 3000); play(fast, circle(1, 900), 33, 3000)
+  check('gesto mais rápido gira mais rápido', Math.abs(fast.view.held!.omega) > Math.abs(slow.view.held!.omega) * 1.8, `lento=${slow.view.held!.omega.toFixed(2)} rápido=${fast.view.held!.omega.toFixed(2)}`)
+  // desacelera: faz o círculo mais devagar a seguir
+  const dec = new PlanetInteraction()
+  grabAt(dec, 700, 300)
+  play(dec, circle(1, 900), 33, 1500)
+  const before = dec.view.held!.omega
+  play(dec, (t) => circle(1, 3000)(t - 1500 + 1500 * (900 / 3000)), 1533, 3300)
+  check('desacelerar o gesto desacelera o giro', Math.abs(dec.view.held!.omega) < Math.abs(before) * 0.6, `${before.toFixed(2)} → ${dec.view.held!.omega.toFixed(2)}`)
+  const rel = cw.update(frame(1600, { hands: [hand(0, { pinch: 'idle' })], events: [{ type: 'pinch-end', slot: 0 }] }), cands, W, H, 1600, true)
+  check('soltar depois de girar: moved=false (planeta continua na órbita)', rel.some((x) => x.type === 'release' && !x.moved))
+}
+
+// 3c) mão parada com tremor: nem arrasta nem gira
+{
+  const pi = new PlanetInteraction()
+  grabAt(pi, 700, 300)
+  const c = play(pi, (t) => [700 + 4 * Math.sin(t / 40), 300 + 4 * Math.cos(t / 33)], 33, 2000)
+  check('tremor com a pinça parada não faz nada', c.length === 0 && !pi.view.held!.moved && !pi.view.held!.rotating)
 }
 
 // 4) alvo = onde o indicador mirava, não onde a pinça acabou

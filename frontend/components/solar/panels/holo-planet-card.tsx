@@ -19,7 +19,7 @@ export function HoloPlanetCard({ name, held }: { name: string; held: boolean }) 
       <dl>
         {rows.map(([k, val]) => <div key={k}><dt>{k}</dt><dd>{val}</dd></div>)}
       </dl>
-      <footer>{held ? 'Abra a pinça para soltar' : 'Faça pinça para selecionar'}</footer>
+      <footer>{held ? 'Mova para arrastar · gire a mão em círculo para rotacionar · abra para soltar' : 'Faça pinça para selecionar'}</footer>
     </aside>
   )
 }

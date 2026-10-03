@@ -11,6 +11,7 @@ import type { HandTrackingController } from './hand-tracking-controller'
 type Controls = { target: THREE.Vector3; minDistance: number; maxDistance: number; dispatchEvent: (e: { type: string }) => void }
 
 const STALE_MS = 400 // sem frames de gesto por tanto tempo (câmera desligada, aba em segundo plano): trata como "sem gesto"
+const PUSH_ZOOM = 0.3 // ln da distância (já multiplicado pelo ganho de zoom) por gesto de empurrar
 const SUN_CLEARANCE = 1.55
 const PLANET_CLEARANCE = 1.45 // × raio do planeta; menor que o limite do closeUp (1,6×), então a vista próxima não é afetada
 
@@ -23,15 +24,17 @@ const PLANET_CLEARANCE = 1.45 // × raio do planeta; menor que o limite do close
  * então a câmera se move de forma contínua mesmo com o rastreamento mais lento que a renderização.
  * Roda depois do CameraRig (-1.5) e antes do OrbitControls (-1), que só relê a posição da câmera.
  */
-export function HandCameraBridge({ controller, controlsRef, planetRefs }: { controller: HandTrackingController | null; controlsRef: RefObject<OrbitControlsRef | null>; planetRefs: RefObject<Record<string, THREE.Group>> }) {
+export function HandCameraBridge({ controller, controlsRef, planetRefs, pushZoomOut = true }: { controller: HandTrackingController | null; controlsRef: RefObject<OrbitControlsRef | null>; planetRefs: RefObject<Record<string, THREE.Group>>; /** false em vista próxima/seguindo: ali "empurrar" sai da vista (feito pela interface) em vez de afastar */ pushZoomOut?: boolean }) {
   const camera = useThree((s) => s.camera)
-  const a = useRef({ theta: 0, phi: 0, zoom: 0, spinTarget: 0, spinV: 0, portal: false, zoomOn: false, spinOn: false, lastAt: -1e9, interacting: false })
+  const a = useRef({ theta: 0, phi: 0, zoom: 0, spinTarget: 0, spinV: 0, portal: false, zoomOn: false, spinOn: false, lastAt: -1e9, interacting: false, push: 0, pushOk: pushZoomOut })
   const v = useMemo(() => ({ offset: new THREE.Vector3(), tmp: new THREE.Vector3(), bodies: [] as Body[], pool: new Map<string, Body>(), sun: { pos: new THREE.Vector3(), radius: SUN_CLEARANCE } as Body }), [])
+
+  useEffect(() => { a.current.pushOk = pushZoomOut })
 
   useEffect(() => {
     if (!controller) return
     const s = a.current
-    const clear = () => { s.theta = s.phi = s.zoom = 0; s.portal = s.zoomOn = s.spinOn = false; s.spinTarget = 0 }
+    const clear = () => { s.theta = s.phi = s.zoom = s.push = 0; s.portal = s.zoomOn = s.spinOn = false; s.spinTarget = 0 }
     const off = controller.subscribeGestures((g) => {
       s.lastAt = performance.now()
       if (!g.engaged) { clear(); return }
@@ -40,6 +43,8 @@ export function HandCameraBridge({ controller, controlsRef, planetRefs }: { cont
       s.spinOn = g.spin.state === 'active'
       if (s.portal) { s.theta += -g.portal.delta.x * HAND_GAIN.azimuth; s.phi += -g.portal.delta.y * HAND_GAIN.polar }
       if (s.zoomOn) s.zoom += g.zoom.delta
+      // empurrar: a câmera recua devagar (consumido com constante de tempo longa no useFrame)
+      if (s.pushOk) for (const e of g.events) if (e.type === 'push') s.push -= PUSH_ZOOM
       s.spinTarget = s.spinOn ? Math.max(-HAND_GAIN.spinMax, Math.min(HAND_GAIN.spinMax, g.spin.velocity * HAND_GAIN.spin)) : 0
     })
     return () => { off(); clear() }
@@ -51,20 +56,23 @@ export function HandCameraBridge({ controller, controlsRef, planetRefs }: { cont
     const s = a.current
     const dt = Math.min(raw, 0.05)
     const stale = performance.now() - s.lastAt > STALE_MS
-    if (stale) { s.theta = s.phi = s.zoom = 0; s.portal = s.zoomOn = s.spinOn = false; s.spinTarget = 0 }
+    if (stale) { s.theta = s.phi = s.zoom = s.push = 0; s.portal = s.zoomOn = s.spinOn = false; s.spinTarget = 0 }
 
     // rotação da cena com inércia física: sobe rápido enquanto o gesto dura e vai parando devagar depois
     s.spinV += (s.spinTarget - s.spinV) * (1 - Math.exp(-dt * (s.spinOn ? 7 : 2.5)))
     if (Math.abs(s.spinV) < 1e-3 && !s.spinOn) s.spinV = 0
 
     const k = 1 - Math.exp(-dt * 16)
-    const dTheta = s.theta * k + s.spinV * dt, dPhi = s.phi * k, dZoom = s.zoom * k
+    const kp = 1 - Math.exp(-dt * 2.6)
+    const dPush = s.push * kp
+    s.push -= dPush
+    const dTheta = s.theta * k + s.spinV * dt, dPhi = s.phi * k, dZoom = s.zoom * k + dPush
     s.theta -= s.theta * k; s.phi -= s.phi * k; s.zoom -= s.zoom * k
 
-    const driving = s.portal || s.zoomOn || s.spinOn || s.spinV !== 0
+    const driving = s.portal || s.zoomOn || s.spinOn || s.spinV !== 0 || Math.abs(s.push) > 2e-3
     // avisa o CameraRig/DeepSpaceCameraRig, como se o usuário tivesse pegado o mouse (cancela a transição em curso)
     if (driving && !s.interacting) { controls.dispatchEvent({ type: 'start' }); s.interacting = true }
-    else if (!driving && s.interacting && Math.abs(s.theta) + Math.abs(s.phi) + Math.abs(s.zoom) < 1e-4) { controls.dispatchEvent({ type: 'end' }); s.interacting = false }
+    else if (!driving && s.interacting && Math.abs(s.theta) + Math.abs(s.phi) + Math.abs(s.zoom) + Math.abs(s.push) < 1e-4) { controls.dispatchEvent({ type: 'end' }); s.interacting = false }
 
     if (Math.abs(dTheta) < 1e-6 && Math.abs(dPhi) < 1e-6 && Math.abs(dZoom) < 1e-6) return
 

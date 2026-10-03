@@ -168,7 +168,7 @@ export function Scene({
         onFollowEnd={onFollowEnd}
         enabled={!deepSpaceMode}
       />
-      <HandCameraBridge controller={handController} controlsRef={controlsRef} planetRefs={planetRefs} />
+      <HandCameraBridge controller={handController} controlsRef={controlsRef} planetRefs={planetRefs} pushZoomOut={!closeUp && !followName} />
       {handInteraction && planetOverrides && !deepSpaceMode && (
         <HandPlanetBridge
           controller={handController}

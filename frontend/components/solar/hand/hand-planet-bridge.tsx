@@ -16,6 +16,7 @@ const FOLLOW_RATE = 12 // 1/s: o planeta alcança a mão suavemente (sem saltar)
 const RETURN_RATE = 4.5
 const MAX_RADIUS = 45 // o planeta não vai para o infinito
 const SUN_CLEAR = 1.9 // não deixa o planeta entrar no Sol
+const SPIN_GAIN = 1.2 // rad/s de giro do planeta por rad/s de giro da mão
 const TRAIL_MAX = 40
 const TRAIL_LIFE_MS = 1100
 const TRAIL_STEP_PX = 5
@@ -83,6 +84,8 @@ export function HandPlanetBridge({ controller, interaction, overrides, planetRef
         else v.offset.set(0, 0, 0)
         live.current.dragName = c.name
         interaction.view.trail.length = 0
+      } else if (c.type === 'rotate-start') {
+        controller?.notify(`GIRANDO ${c.name.toUpperCase()}`)
       } else if (c.type === 'release') {
         if (c.moved) overrides.drop(c.name)
         live.current.dragName = null
@@ -165,6 +168,14 @@ export function HandPlanetBridge({ controller, interaction, overrides, planetRef
       const tr = view.trail
       while (tr.length && now - tr[0].t > TRAIL_LIFE_MS) tr.shift()
     }
+
+    // 3b) rotação do planeta: o círculo da mão define sentido e velocidade; ao soltar, a inércia desacelera
+    for (const p of planets) {
+      const driven = held?.name === p.name && held.rotating
+      if (driven) overrides.setSpin(p.name, held!.omega * SPIN_GAIN, true)
+      else if (overrides.spinSpeed(p.name) !== 0 || overrides.spinAngle(p.name) !== 0) overrides.setSpin(p.name, 0, false)
+    }
+    overrides.stepSpin(dt)
 
     // 4) planetas soltos que estão voltando para a órbita
     if (overrides.size) {

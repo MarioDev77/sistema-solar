@@ -98,6 +98,9 @@ export function HandPanel({ status, settings, onToggle, onRecalibrate, onDisenga
           <li><b>Pausar/retomar:</b> uma palma aberta e parada por 1 segundo.</li>
           <li><b>Ver dados:</b> aponte com o indicador para um planeta (com o modo holográfico ativo).</li>
           <li><b>Selecionar e mover:</b> mirando o planeta, junte polegar e indicador (pinça) e mova a mão; abra a pinça para soltar.</li>
+          <li><b>Girar o planeta:</b> segure a pinça e faça círculos com a mão; o sentido e a velocidade do círculo viram o giro (acelere ou desacelere o gesto).</li>
+          <li><b>Puxar:</b> mão aberta estendida, depois recolha para o corpo: aproxima o planeta mirado (ou o selecionado) para análise.</li>
+          <li><b>Empurrar:</b> mão aberta avança rápido para a câmera: sai da vista próxima ou afasta a câmera.</li>
           <li><b>Voltar à órbita:</b> botão RESTAURAR ÓRBITA.</li>
         </ol>
       </details>

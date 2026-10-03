@@ -190,7 +190,20 @@ export function HandOverlay({ controller, show, interaction = null }: { controll
       ctx.fillStyle = `rgba(${ACCENT}, 0.95)`
       ctx.fillText(focus.name.toUpperCase(), focus.x, focus.y - r - 16)
       ctx.font = mono; ctx.fillStyle = `rgba(${ACCENT}, 0.7)`
-      ctx.fillText(held ? (held.moved ? 'ARRASTANDO' : 'SELECIONADO') : 'ALVO', focus.x, focus.y - r - 4)
+      ctx.fillText(held ? (held.rotating ? 'ROTAÇÃO' : held.moved ? 'ARRASTANDO' : 'SELECIONADO') : 'ALVO', focus.x, focus.y - r - 4)
+      if (held?.rotating) { // setas giratórias no sentido do giro + velocidade
+        const cw = held.omega >= 0, speed = Math.min(1, Math.abs(held.omega) / 6)
+        ctx.strokeStyle = `rgba(${ACCENT}, ${0.35 + 0.55 * speed})`; ctx.lineWidth = 1.6
+        const base = t * (cw ? 1 : -1) * (0.8 + 3 * speed), rr = r + 16
+        for (const off of [0, Math.PI]) {
+          const s0 = base + off, e0 = s0 + (cw ? 1 : -1) * 1.1
+          ctx.beginPath(); ctx.arc(focus.x, focus.y, rr, s0, e0, !cw); ctx.stroke()
+          const ex = focus.x + Math.cos(e0) * rr, ey = focus.y + Math.sin(e0) * rr, tg = e0 + (cw ? Math.PI / 2 : -Math.PI / 2)
+          ctx.beginPath(); ctx.moveTo(ex, ey); ctx.lineTo(ex - Math.cos(tg - 0.5) * 7, ey - Math.sin(tg - 0.5) * 7); ctx.moveTo(ex, ey); ctx.lineTo(ex - Math.cos(tg + 0.5) * 7, ey - Math.sin(tg + 0.5) * 7); ctx.stroke()
+        }
+        ctx.fillStyle = `rgba(${ACCENT}, 0.85)`
+        ctx.fillText(`${cw ? '↻ HORÁRIO' : '↺ ANTI-HORÁRIO'} · ${Math.abs(held.omega * 1.2).toFixed(1)} rad/s`, focus.x, focus.y + r + 30)
+      }
     }
 
     const drawGesture = (g: GestureFrame) => { drawPortal(g); drawTwoHands(g); drawFocus(g); drawCursor(g) }

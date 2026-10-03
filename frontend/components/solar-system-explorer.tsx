@@ -97,6 +97,30 @@ export default function SolarSystemExplorer() {
       }
     })
   }, [handTracking.controller])
+  // puxar = aproximar o objeto para análise · empurrar = voltar à visão geral (só com o modo holográfico engajado)
+  const pullPush = useRef({ closeUp: null as string | null, followName: null as string | null, focus: null as string | null, selected: 'Saturno', blocked: false })
+  useEffect(() => {
+    const controller = handTracking.controller
+    if (!controller) return
+    return controller.subscribeGestures((g) => {
+      if (!g.engaged) return
+      const st = pullPush.current
+      for (const e of g.events) {
+        if (e.type !== 'pull' && e.type !== 'push') continue
+        if (st.blocked || planetInteraction.view.held) continue
+        if (e.type === 'pull') {
+          const name = st.focus ?? st.selected
+          const planet = planets.find((x) => x.name === name)
+          if (!planet || st.closeUp === name) continue
+          setSelected(planet); setSelectedMoon(null); setInfoOpen(true); setFollowName(null); setCloseUp(name)
+          controller.notify('APROXIMAR OBJETO PARA ANÁLISE')
+        } else {
+          if (st.closeUp || st.followName) { setCloseUp(null); setFollowName(null); setSelectedMoon(null) }
+          controller.notify('RETORNAR VISUALIZAÇÃO') // sem vista próxima: a ponte da câmera recua o zoom
+        }
+      }
+    })
+  }, [handTracking.controller, planetInteraction])
   // depois que a cena abriu, as texturas das luas chegam em segundo plano (sem competir com a abertura)
   useEffect(() => { if (ready) preloadMoonTexturesIdle() }, [ready])
   // Esc sai da vista próxima / do seguimento
@@ -206,6 +230,7 @@ export default function SolarSystemExplorer() {
     setFollowName(null)
     setCloseUp(null)
   }
+  pullPush.current = { closeUp, followName, focus: handFocus?.name ?? null, selected: selected.name, blocked: deepSpaceMode || teacherMode }
   keyActions.current = { previous: () => changeSelectedPlanet(-1), next: () => changeSelectedPlanet(1), planetsEnabled: !deepSpaceMode && !teacherMode }
   const toggleFullscreen = async () => {
     try {
