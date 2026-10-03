@@ -2118,3 +2118,7 @@ button.space-label.active {
 .hand-switch { display: flex; align-items: center; gap: .55rem; margin-top: .6rem; color: #a9bdc7; font-size: .68rem; cursor: pointer; }
 .hand-switch input { accent-color: var(--accent); }
 @media (max-width: 720px) { .hand-hud { display: none; } }
+/* o HUD ocupa o canto inferior direito: o painel de dados termina acima dele */
+@media (min-width: 721px) {
+  .hand-on .info-panel { max-height: calc(100svh - var(--topbar-h) - 2rem - 13.5rem); }
+}
