@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState, useEffect } from 'react'
+import { useMemo, useRef, useState, useEffect } from 'react'
 import { Search, Orbit, Hand, Play, Pause, Maximize2, ChevronRight, X, Layers3, Camera, MousePointer2, ZoomIn, ArrowLeft, Compass, GitCompareArrows, BookOpen, Presentation, Check, Telescope, MoreHorizontal, Sparkles as SparklesIcon, PanelRightOpen, PanelRightClose, Sigma } from 'lucide-react'
 import { SIM_T0, SimClock } from './solar/clock'
 import { CatalogObject, catalogObjects, CosmosObject, cosmosObjects, lessons, moonKnowledge, MoonSelection, PlanetData, planets } from './solar/data'
@@ -18,6 +18,9 @@ import { HandPanel } from './solar/panels/hand-panel'
 import { useHandTracking } from './solar/hand/use-hand-tracking'
 import { HandOverlay } from './solar/hand/hand-overlay'
 import { HandHud } from './solar/hand/hand-hud'
+import { PlanetInteraction } from './solar/hand/planet-interaction'
+import { PlanetOverrides } from './solar/hand/planet-overrides'
+import { HoloPlanetCard } from './solar/panels/holo-planet-card'
 import { GuidePanel } from './solar/panels/guide-panel'
 import { NebulaCard } from './solar/panels/nebula-card'
 import { FormulasPanel } from './solar/panels/formulas-panel'
@@ -39,6 +42,12 @@ export default function SolarSystemExplorer() {
   const [query, setQuery] = useState('')
   const [hand, setHand] = useState(false)
   const handTracking = useHandTracking()
+  // planetas agarrados pela mão: ficam fora do React (a cena lê por ref); o React só sabe quantos foram movidos
+  const planetInteraction = useMemo(() => new PlanetInteraction(), [])
+  const planetOverrides = useMemo(() => new PlanetOverrides(), [])
+  const [handFocus, setHandFocus] = useState<{ name: string; held: boolean } | null>(null)
+  const [movedPlanets, setMovedPlanets] = useState(0)
+  useEffect(() => planetOverrides.subscribe((names) => setMovedPlanets(names.length)), [planetOverrides])
   const [layers, setLayers] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [simulationOpen, setSimulationOpen] = useState(false)
@@ -219,16 +228,20 @@ export default function SolarSystemExplorer() {
   const showPlanetToggle = !infoOpen && !deepSpaceMode && !teacherMode && !compareOpen
   const showNebulaToggle = !!focusedNebula && !nebulaCardOpen && deepSpaceMode && !cosmosOpen && !teacherMode
   return (
-    <main className={`explorer ${closeUp ? 'is-closeup' : ''} ${teacherMode ? 'teacher-mode' : ''} ${teacherMode && formulasOpen ? 'formulas-open' : ''} ${deepSpaceMode ? 'deep-space-mode' : ''} ${handTracking.status.enabled ? 'hand-on' : ''}`}>
+    <main className={`explorer ${closeUp ? 'is-closeup' : ''} ${teacherMode ? 'teacher-mode' : ''} ${teacherMode && formulasOpen ? 'formulas-open' : ''} ${deepSpaceMode ? 'deep-space-mode' : ''} ${handTracking.status.enabled ? 'hand-on' : ''} ${hand ? 'hand-open' : ''}`}>
       {!ready && <LoadingScreen onDone={() => setReady(true)} />}
       <div className="scene">
         <Scene selected={selected.name} showLabels={showLabels} followName={followName} closeUp={closeUp}
           onSelect={(p) => { setSelected(p); setSelectedMoon(null); setInfoOpen(true); setFollowName(null); setCloseUp(p.name) }}
           onMoonSelect={(moon, planet) => { setSelected(planet); setSelectedMoon({ moon, planet }); setInfoOpen(true); setFollowName(null); setCloseUp(planet.name) }}
-          showOrbits={showOrbits} belt={belt} kuiperBelt={kuiperBelt} comets={comets} deepSpaceMode={deepSpaceMode} nebulaFocus={nebulaFocus} onNebulaSelect={selectNebula} clock={clock} onFollowEnd={() => setFollowName(null)} handController={handTracking.controller} />
+          showOrbits={showOrbits} belt={belt} kuiperBelt={kuiperBelt} comets={comets} deepSpaceMode={deepSpaceMode} nebulaFocus={nebulaFocus} onNebulaSelect={selectNebula} clock={clock} onFollowEnd={() => setFollowName(null)} handController={handTracking.controller}
+          handInteraction={planetInteraction} planetOverrides={planetOverrides} onHandFocus={setHandFocus}
+          onHandSelect={(name) => { const p = planets.find((x) => x.name === name); if (p) { setSelected(p); setSelectedMoon(null); setInfoOpen(true) } }} />
       </div>
 
-      <HandOverlay controller={handTracking.controller} show={handTracking.settings.showLandmarks} />
+      <HandOverlay controller={handTracking.controller} show={handTracking.settings.showLandmarks} interaction={planetInteraction} />
+      {handTracking.status.enabled && handTracking.status.holoActive && handFocus && <HoloPlanetCard name={handFocus.name} held={handFocus.held} />}
+      {movedPlanets > 0 && <button className="holo-restore" onClick={() => planetOverrides.restoreAll()}><Orbit size={14} /> RESTAURAR ÓRBITA · {movedPlanets}</button>}
       <HandHud status={handTracking.status} selectedName={selectedMoon?.moon.name ?? selected.name} playing={playing} />
 
       <header className="topbar">
@@ -364,7 +377,7 @@ export default function SolarSystemExplorer() {
 
       {layers && <LayersPanel showOrbits={showOrbits} belt={belt} kuiperBelt={kuiperBelt} comets={comets} setShowOrbits={setShowOrbits} setBelt={setBelt} setKuiperBelt={setKuiperBelt} setComets={setComets} />}
 
-      {hand && <HandPanel status={handTracking.status} settings={handTracking.settings} onToggle={handTracking.toggle} onRecalibrate={handTracking.recalibrate} onDisengage={handTracking.disengage} onSelectDevice={handTracking.selectDevice} onSettings={handTracking.updateSettings} onClose={() => setHand(false)} />}
+      {hand && <HandPanel status={handTracking.status} settings={handTracking.settings} onToggle={handTracking.toggle} onRecalibrate={handTracking.recalibrate} onDisengage={handTracking.disengage} movedPlanets={movedPlanets} onRestoreOrbits={() => planetOverrides.restoreAll()} onSelectDevice={handTracking.selectDevice} onSettings={handTracking.updateSettings} onClose={() => setHand(false)} />}
 
       {guidedOpen && <GuidePanel selected={selected} playing={playing} guideTab={guideTab} lessonIndex={lessonIndex} lessonStep={lessonStep} lessonChoice={lessonChoice} lessonRevealed={lessonRevealed} experimentDistance={experimentDistance} experimentMass={experimentMass} experimentPlaying={experimentPlaying} lesson={lesson} lessonPlanet={lessonPlanet} chooseLesson={chooseLesson} setSelected={setSelected} setSelectedMoon={setSelectedMoon} setInfoOpen={setInfoOpen} setPlaying={setPlaying} setGuidedOpen={setGuidedOpen} setGuideTab={setGuideTab} setLessonStep={setLessonStep} setLessonChoice={setLessonChoice} setLessonRevealed={setLessonRevealed} setExperimentDistance={setExperimentDistance} setExperimentMass={setExperimentMass} setExperimentPlaying={setExperimentPlaying} setFollowName={setFollowName} setCloseUp={setCloseUp} />}
 

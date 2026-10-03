@@ -9,6 +9,7 @@ import { Atmosphere, MoonBody, SaturnRings } from './bodies'
 import { planetAngle, SimClock } from './clock'
 import { MoonData, PlanetData } from './data'
 import { MoonOrbits, OrbitLine } from './orbits'
+import type { PlanetOverrides } from './hand/planet-overrides'
 import { textures } from './textures'
 
 export function Planet({
@@ -23,6 +24,7 @@ export function Planet({
   showOrbits,
   planetRefs,
   detail,
+  overrides,
 }: {
   data: PlanetData
   selected: boolean
@@ -35,6 +37,8 @@ export function Planet({
   showOrbits: boolean
   planetRefs: RefObject<Record<string, THREE.Group>>
   detail: number
+  /** planetas tirados da órbita pelo controle por mãos (opcional) */
+  overrides?: PlanetOverrides
 }) {
   const ref = useRef<THREE.Group | null>(null)
   const camera = useThree((state) => state.camera)
@@ -59,6 +63,10 @@ export function Planet({
   const place = () => {
     const group = ref.current
     if (!group) return
+
+    // arrastado (ou solto) pela mão: fica na posição escolhida em vez de seguir a órbita
+    const manual = overrides?.get(data.name)
+    if (manual) { group.position.copy(manual.pos); return }
 
     const angle = planetAngle(data.orbit, clock.current.t)
     group.position.set(

@@ -10,6 +10,8 @@ type Props = {
   onToggle: () => void
   onRecalibrate: () => void
   onDisengage: () => void
+  movedPlanets?: number
+  onRestoreOrbits?: () => void
   onSelectDevice: (id: string) => void
   onSettings: (partial: Partial<HandSettings>) => void
   onClose: () => void
@@ -23,7 +25,7 @@ const PHASE_TEXT: Record<TrackingStatus['phase'], string> = {
   ready: 'RASTREAMENTO ATIVO',
 }
 
-export function HandPanel({ status, settings, onToggle, onRecalibrate, onDisengage, onSelectDevice, onSettings, onClose }: Props) {
+export function HandPanel({ status, settings, onToggle, onRecalibrate, onDisengage, movedPlanets = 0, onRestoreOrbits, onSelectDevice, onSettings, onClose }: Props) {
   const videoRef = useRef<HTMLVideoElement | null>(null)
   useEffect(() => {
     const video = videoRef.current
@@ -79,6 +81,13 @@ export function HandPanel({ status, settings, onToggle, onRecalibrate, onDisenga
         </button>
       )}
 
+      {movedPlanets > 0 && onRestoreOrbits && (
+        <button className="travel-button secondary" onClick={onRestoreOrbits}>
+          <RefreshCw size={15} />
+          RESTAURAR ÓRBITA ({movedPlanets})
+        </button>
+      )}
+
       <details className="hand-help">
         <summary>COMO USAR OS GESTOS</summary>
         <ol>
@@ -87,6 +96,9 @@ export function HandPanel({ status, settings, onToggle, onRecalibrate, onDisenga
           <li><b>Zoom:</b> duas mãos abertas; afastar aproxima, aproximar afasta.</li>
           <li><b>Girar a cena:</b> círculo com as duas mãos; quanto mais rápido, mais rápida a rotação.</li>
           <li><b>Pausar/retomar:</b> uma palma aberta e parada por 1 segundo.</li>
+          <li><b>Ver dados:</b> aponte com o indicador para um planeta (com o modo holográfico ativo).</li>
+          <li><b>Selecionar e mover:</b> mirando o planeta, junte polegar e indicador (pinça) e mova a mão; abra a pinça para soltar.</li>
+          <li><b>Voltar à órbita:</b> botão RESTAURAR ÓRBITA.</li>
         </ol>
       </details>
 

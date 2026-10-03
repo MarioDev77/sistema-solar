@@ -10,6 +10,9 @@ import { CameraRig, DeepSpaceCameraRig, MAX_DIST, MIN_DIST, type OrbitControlsRe
 import { SimClock, SimulationClock } from './clock'
 import { CosmosObject, cosmosObjects, MoonData, PlanetData, planets } from './data'
 import { HandCameraBridge } from './hand/hand-camera-bridge'
+import { HandPlanetBridge } from './hand/hand-planet-bridge'
+import type { PlanetInteraction } from './hand/planet-interaction'
+import type { PlanetOverrides } from './hand/planet-overrides'
 import type { HandTrackingController } from './hand/hand-tracking-controller'
 import { DeepSpaceNebula } from './nebula'
 import { Planet } from './planet-system'
@@ -33,6 +36,10 @@ export function Scene({
   clock,
   onFollowEnd,
   handController = null,
+  handInteraction = null,
+  planetOverrides = null,
+  onHandFocus,
+  onHandSelect,
 }: {
   selected: string
   showLabels: boolean
@@ -50,6 +57,10 @@ export function Scene({
   clock: RefObject<SimClock>
   onFollowEnd: () => void
   handController?: HandTrackingController | null
+  handInteraction?: PlanetInteraction | null
+  planetOverrides?: PlanetOverrides | null
+  onHandFocus?: (focus: { name: string; held: boolean } | null) => void
+  onHandSelect?: (name: string) => void
 }) {
   const controlsRef = useRef<OrbitControlsRef>(null)
   const planetRefs = useRef<Record<string, THREE.Group>>({})
@@ -121,6 +132,7 @@ export function Scene({
           showOrbits={showOrbits}
           planetRefs={planetRefs}
           detail={detail}
+          overrides={planetOverrides ?? undefined}
         />
       ))}
 
@@ -157,6 +169,18 @@ export function Scene({
         enabled={!deepSpaceMode}
       />
       <HandCameraBridge controller={handController} controlsRef={controlsRef} planetRefs={planetRefs} />
+      {handInteraction && planetOverrides && !deepSpaceMode && (
+        <HandPlanetBridge
+          controller={handController}
+          interaction={handInteraction}
+          overrides={planetOverrides}
+          planetRefs={planetRefs}
+          clock={clock}
+          interactive={!closeUp && !followName}
+          onFocus={(focus) => onHandFocus?.(focus)}
+          onSelect={(name) => onHandSelect?.(name)}
+        />
+      )}
       <DeepSpaceCameraRig enabled={deepSpaceMode} focusName={nebulaFocus} nebulaRefs={nebulaRefs} controlsRef={controlsRef} />
     </Canvas>
   )
